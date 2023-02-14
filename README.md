@@ -6,13 +6,13 @@
 
 **Please install simplines**
 
-**For your analysis You can find and install the following packages from the url**
+*For your analysis You can find and install the following packages from the url**
 
-**for simplines :
+**for simplines :**
                 
                    https://github.com/Bahari95/simplines
 
 
-**for psydac : 
+**for psydac : **
 
                    https://github.com/pyccel/psydac
