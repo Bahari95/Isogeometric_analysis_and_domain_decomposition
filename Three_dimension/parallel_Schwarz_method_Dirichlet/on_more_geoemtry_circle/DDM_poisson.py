@@ -123,7 +123,7 @@ iter_max = 7
 #------------------------------------------------------------
 #..... Initialisation and computing optimal mapping for 16*16
 #------------------------------------------------------------
-nelements  = 32
+nelements  = 20
 
 grids_0 = linspace(0, alpha, nelements+1)
 # create the spline space for each direction
