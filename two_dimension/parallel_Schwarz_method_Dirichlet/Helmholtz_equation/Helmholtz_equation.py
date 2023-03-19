@@ -44,6 +44,7 @@ from   matplotlib                   import cm
 from   mpl_toolkits.mplot3d.axes3d  import get_test_data
 from   matplotlib.ticker            import LinearLocator, FormatStrFormatter
 #..
+from   scipy.sparse                 import kron
 from   scipy.sparse                 import csr_matrix
 from   scipy.sparse                 import csc_matrix, linalg as sla
 from   numpy                        import zeros, linalg, asarray, linspace
@@ -52,7 +53,7 @@ from   tabulate                     import tabulate
 import numpy                        as     np
 
 #==============================================================================       
-def   Pr_h_solve(V1, V2, V, Vt, u, domain_nb, ovlp_value): 
+def   Pr_h_solve(V1, V2, V, Vt, u, u_d, domain_nb, ovlp_value): 
 
        # Stiffness and Mass matrix in 1D in the first deriction
        M1         = assemble_mass1D(V1)
@@ -78,6 +79,13 @@ def   Pr_h_solve(V1, V2, V, Vt, u, domain_nb, ovlp_value):
        u_L2       = StencilVector(V.vector_space)
        u_L2.from_array(V, x_n)
        
+       # ... TOLERANCE
+       M2         = assemble_mass1D(V2)
+       M2         = M2.tosparse()
+       M          = kron(M1, M2)
+       dx         = u_L2.toarray() - u_d.toarray()
+       l2_residual = sqrt(dx.dot(M.dot(dx)) )
+       print( "l2_residual=============================", l2_residual)
        return u_L2, x_n
 
 #==============================================================================
@@ -203,10 +211,10 @@ print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
 
 for i in range(iter_max):
 	# ... Dirichlezt boudndary condition in x = 0.75 and 0.25
-	uh_d1, xh_d                      = Pr_h_solve(V2_0, V2_1, V_0, Vt_0, u_1, 0, alpha)
-	uh_d1c, xh_dc                    = Pr_h_solve(V2_0, V2_1, V_0, Vt_0, u_1c, 0, alpha)
-	uh_d0, xh                        = Pr_h_solve(V2_1, V2_0, V_1, Vt_1, u_0, 1, beta)
-	uh_d0c, xhc                      = Pr_h_solve(V2_1, V2_0, V_1, Vt_1, u_0c, 1, beta)
+	uh_d1, xh_d                      = Pr_h_solve(V2_0, V2_1, V_0, Vt_0, u_1, uh_d1, 0, alpha)
+	uh_d1c, xh_dc                    = Pr_h_solve(V2_0, V2_1, V_0, Vt_0, u_1c, uh_d1c, 0, alpha)
+	uh_d0, xh                        = Pr_h_solve(V2_1, V2_0, V_1, Vt_1, u_0, uh_d0, 1, beta)
+	uh_d0c, xhc                      = Pr_h_solve(V2_1, V2_0, V_1, Vt_1, u_0c,uh_d0c, 1, beta)
 	#...
 	u_0, u_0c, xuh, xuhc, l2_norm, H1_norm, l2_normc, H1_normc  = Helmholtz_solve(V1_0, V2_0, V_0, 0, u_d= uh_d1, u_dc= uh_d1c)
 	xuh_0.append(xuh)
