@@ -19,6 +19,8 @@
 
 ## The Helmholtz equation with wave number K = 20
 
+https://doi.org/10.1016/j.cma.2018.02.020
+  
 #### (left) real solution evolution (right) solution for the last iteration
 ![PNG](https://github.com/Bahari95/Isogeometric_analysis_for_domain_decomposition_Poisson_equation/blob/main/two_dimension/parallel_Schwarz_method_Dirichlet/Helmholtz_equation/solut_evol.png)
 
