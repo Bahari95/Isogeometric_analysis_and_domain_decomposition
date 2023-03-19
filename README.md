@@ -17,7 +17,7 @@
 
   https://github.com/Bahari95/simplines
 
-### The Helmholtz equation
+### The Helmholtz equation K = 20
 #### (left) approximate and (right) exact solution
 ![PNG](https://github.com/Bahari95/Isogeometric_analysis_for_domain_decomposition_Poisson_equation/blob/main/two_dimension/parallel_Schwarz_method_Dirichlet/Helmholtz_equation/Helmholtz_3D.png)
 
