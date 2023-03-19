@@ -161,9 +161,9 @@ quad_degree = degree + 1
 alpha       = 0.75
 beta        = 0.25
 overlap     = alpha - beta
-xuh_0    = []
-xuh_01   = []
-iter_max = 30
+xuh_0       = []
+xuh_01      = []
+iter_max    = 60
 
 #----------------------
 #..... Initialisation and computing optimal mapping for 16*16
@@ -249,7 +249,7 @@ if True :
 	plt.colorbar(im, cax=cax)
 	fig.tight_layout()
 	plt.subplots_adjust(wspace=0.3)
-	plt.savefig('densities_ex.png')
+	plt.savefig('real_complex_Helmholtz.png')
 	plt.show()
 	u_0  = []
 	u_01 = []
@@ -275,7 +275,7 @@ if True :
 	plt.plot(X_1[:,50], u_1[:,50],  '--om', label = '$\mathbf{Un_1-iter-max}$')
 	plt.grid(True)
 	plt.legend()
-	#plt.savefig('figs/Pu_{}.png'.format(0))
+	plt.savefig('solut_evol.png')
 	plt.show()
 	# set up a figure twice as wide as it is tall
 	fig = plt.figure(figsize=plt.figaspect(0.5))
@@ -313,5 +313,5 @@ if True :
 	ax.set_xlabel('F1',  fontweight ='bold')
 	ax.set_ylabel('F2',  fontweight ='bold')
 	fig.colorbar(surf, shrink=0.5, aspect=25)
-	plt.savefig('Poisson3D.png')
+	plt.savefig('Helmholtz.png')
 	plt.show()
