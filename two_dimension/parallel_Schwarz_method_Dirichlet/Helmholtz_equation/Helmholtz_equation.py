@@ -13,15 +13,15 @@ import time
 start = time.time()
 
 #---In Poisson equation
-from gallery_section_04 import assemble_vector_ex01 #---1 : In uniform mesh
-from gallery_section_04 import assemble_vector_ex11 #---1 : In uniform mesh
+from gallery_section_04 import assemble_vector_ex01
+from gallery_section_04 import assemble_vector_ex11
 from gallery_section_04 import assemble_vector_ex02
 
 from gallery_section_04 import assemble_massmatrix1D
-from gallery_section_04 import assemble_matrix_un_ex01 #---1 : In uniform mesh
-from gallery_section_04 import assemble_matrix_un_ex11 #---1 : In uniform mesh
+from gallery_section_04 import assemble_matrix_un_ex01
+from gallery_section_04 import assemble_matrix_un_ex11 
 
-from gallery_section_04 import assemble_norm_ex01 #---1 : In uniform mesh
+from gallery_section_04 import assemble_norm_ex01 
 
 
 assemble_mass1D      = compile_kernel( assemble_massmatrix1D, arity=2)
@@ -52,7 +52,9 @@ from   numpy                        import cos, sin, pi, exp, sqrt, arctan2
 from   tabulate                     import tabulate
 import numpy                        as     np
 
-#==============================================================================       
+#==============================================================================    
+# ... projection of a solution in a sub-domain to another sub-domain
+#==============================================================================    
 def   Pr_h_solve(V1, V2, V, Vt, u, u_d, domain_nb, ovlp_value): 
 
        # Stiffness and Mass matrix in 1D in the first deriction
@@ -90,6 +92,7 @@ def   Pr_h_solve(V1, V2, V, Vt, u, u_d, domain_nb, ovlp_value):
 
 #==============================================================================
 #.......Poisson ALGORITHM
+#==============================================================================  
 def Helmholtz_solve(V1, V2 , V, domain_nb, Vh = None, u_d = None, u_dc = None):
 
        u   = StencilVector(V.vector_space)
@@ -174,7 +177,7 @@ xuh_01      = []
 iter_max    = 60
 
 #----------------------
-#..... Initialisation and computing optimal mapping for 16*16
+#..... Initialisation 
 #----------------------
 nelements  = 16
 
@@ -227,7 +230,7 @@ for i in range(iter_max):
 #---Compute a solution
 nbpts = 100
 # # ........................................................
-# ....................For testing in one nelements
+# ....................For a plot
 # #.........................................................
 if True :
 	#---Compute a solution
