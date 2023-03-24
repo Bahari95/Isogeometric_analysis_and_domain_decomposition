@@ -17,10 +17,10 @@ assemble_matrix_ex01 = compile_kernel(assemble_matrix_ex11, arity=2)
 assemble_matrix_ex10 = compile_kernel(assemble_matrix_ex12, arity=2)
 
 #---In Poisson equation
-from gallery_section_04 import assemble_vector_ex01    #---1 : In uniform mesh
-from gallery_section_04 import assemble_matrix_un_ex01 #---1 : In uniform mesh
-from gallery_section_04 import assemble_norm_ex01      #---1 : In uniform mesh
-from gallery_section_04 import assemble_vector_ex02    #---1 : In uniform mesh
+from gallery_section_04 import assemble_vector_ex01    
+from gallery_section_04 import assemble_matrix_un_ex01 
+from gallery_section_04 import assemble_norm_ex01      
+from gallery_section_04 import assemble_vector_ex02    
 
 assemble_Pr          = compile_kernel(assemble_vector_ex02, arity=1)
 assemble_stiffness2D = compile_kernel(assemble_matrix_un_ex01, arity=2)
@@ -47,7 +47,9 @@ import time
 
 from tabulate import tabulate
 
-#==============================================================================       
+#==============================================================================      
+# ... projection of a solution in a sub-domain to another sub-domain
+#==============================================================================      
 def   Pr_h_solve(V1, V2, V3, V4, V, Vt, u, domain_nb, ovlp_value): 
 
        # Stiffness and Mass matrix in 1D in the first deriction
@@ -82,7 +84,8 @@ def   Pr_h_solve(V1, V2, V3, V4, V, Vt, u, domain_nb, ovlp_value):
        return u_L2, x_n
        
 #==============================================================================
-#.......Poisson ALGORITHM
+# ... Poisson ALGORITHM
+#==============================================================================
 def poisson_solve(V1, V2, V3, V, u_d = None):
        u                   = StencilVector(V.vector_space)
        # ++++
@@ -127,12 +130,9 @@ def poisson_solve(V1, V2, V3, V, u_d = None):
        mats_2              = [M2, K2]
        mats_3              = [M3, K3]
        # ...
-       #poisson            = Poisson(mats_1, mats_2, mats_3)
-       # ... TO integrate the boundary in T=1assemble_vector_ex02
-       # ...
        M                   = kron(K1,kron(M2,M3))+kron(M1,kron(K2,M3))+kron(M1,kron(M2,K3))
        lu                  = sla.splu(csc_matrix(M))
-       # ++++
+       # +++
        #--Assembles a right hand side of Poisson equation
        rhs                 = assemble_rhs( V, fields = [u_d] )
        b                   = rhs.toarray()
@@ -168,7 +168,7 @@ xuh_01   = []
 iter_max = 10
 
 #----------------------
-#..... Initialisation and computing optimal mapping for 16*16
+#..... Initialisation 
 #----------------------
 nelements  = 16
 
@@ -217,7 +217,7 @@ for i in range(iter_max):
 #---Compute a solution
 nbpts = 100
 # # ........................................................
-# ....................For testing in one nelements
+# ....................For a plot
 # #.........................................................
 if True :
 	#---Compute a solution
