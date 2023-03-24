@@ -120,13 +120,14 @@ def assemble_stiffnessmatrix1D(ne, degree, spans, basis, weights, points,  matri
 
 #==============================================================================
 # .. in uniform mesh Matrix
-@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:,:,:]')
+@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'int', 'real', 'double[:,:,:,:]')
 def assemble_matrix_un_ex01(ne1, ne2,
                         p1, p2,
                         spans_1, spans_2,
                         basis_1, basis_2,
                         weights_1, weights_2,
                         points_1, points_2,
+                        domain_nb, S_DDM,
                         matrix):
 
     # ... sizes
@@ -139,9 +140,6 @@ def assemble_matrix_un_ex01(ne1, ne2,
 
     k1 = weights_1.shape[1]
     k2 = weights_2.shape[1]
-
-    # ...
-    lcoeffs_u  = zeros((p1+1,p2+1))
 
     # ... build matrices
     for ie1 in range(0, ne1):
@@ -182,6 +180,54 @@ def assemble_matrix_un_ex01(ne1, ne2,
                                     v += (bj_x1* bi_x1 + bj_x2 * bi_x2) * wvol
 
                             matrix[p1+i1, p2+i2, p1+j1-i1, p2+j2-i2]  += v
+    # ... build matrices
+    if domain_nb == 0:
+         ie1      = ne1 -1
+         i_span_1 = spans_1[ie1]
+         for ie2 in range(0, ne2):
+                i_span_2 = spans_2[ie2]
+                    
+                for il_2 in range(0, p2+1):
+                        for jl_2 in range(0, p2+1):
+
+                            i2 = i_span_2 - p2 + il_2
+                            j2 = i_span_2 - p2 + jl_2
+
+                            v  = 0.0
+                            for g2 in range(0, k2):
+                                    bi_0  = basis_2[ie2, il_2, 0, g2]
+                                    bj_0  = basis_2[ie2, jl_2, 0, g2]
+
+                                    wvol  = weights_2[ie2, g2]
+                                    # ...
+                                    K     = 20.
+                                    # ...
+                                    v    += S_DDM * bi_0 * bj_0 * wvol
+
+                            matrix[i_span_1+p1, p2+i2, p1, p2+j2-i2]  += v
+    else :
+         ie1  = 0
+         i_span_1 = spans_1[ie1]
+         for ie2 in range(0, ne2):
+                i_span_2 = spans_2[ie2]
+                    
+                for il_2 in range(0, p2+1):
+                        for jl_2 in range(0, p2+1):
+
+                            i2 = i_span_2 - p2 + il_2
+                            j2 = i_span_2 - p2 + jl_2
+
+                            v  = 0.0
+                            for g2 in range(0, k2):
+                                    bi_0  = basis_2[ie2, il_2, 0, g2]
+                                    bj_0  = basis_2[ie2, jl_2, 0, g2]
+
+                                    wvol  = weights_2[ie2, g2]
+                                    # ...
+                                    # ...
+                                    v    += S_DDM * bi_0 * bj_0 * wvol
+
+                            matrix[p1, p2+i2, p1, p2+j2-i2]  += v
     # ...
 
 #==============================================================================Assemble rhs Poisson
