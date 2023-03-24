@@ -17,11 +17,11 @@ assemble_matrix_ex01 = compile_kernel(assemble_matrix_ex11, arity=2)
 assemble_matrix_ex10 = compile_kernel(assemble_matrix_ex12, arity=2)
 
 #---In Poisson equation
-from gallery_section_04 import assemble_vector_ex01    #---1 : In uniform mesh
-from gallery_section_04 import assemble_matrix_un_ex01 #---1 : In uniform mesh
-from gallery_section_04 import assemble_norm_ex01      #---1 : In uniform mesh
-from gallery_section_04 import assemble_vector_ex02    #---1 : In uniform mesh
-from gallery_section_04 import assemble_matrix_ex01    #---1 : In uniform mesh
+from gallery_section_04 import assemble_vector_ex01   
+from gallery_section_04 import assemble_matrix_un_ex01
+from gallery_section_04 import assemble_norm_ex01      
+from gallery_section_04 import assemble_vector_ex02   
+from gallery_section_04 import assemble_matrix_ex01   
 
 
 assemble_mass2D      = compile_kernel(assemble_matrix_un_ex01, arity=2)
@@ -50,7 +50,9 @@ import time
 
 from tabulate import tabulate
 
-#==============================================================================       
+#============================================================================== 
+# ... projection of a solution in a sub-domain to another sub-domain
+#============================================================================== 
 def   Pr_h_solve(V1, V2, V, Vt, u, domain_nb, ovlp_value): 
 
        # ...
@@ -78,6 +80,7 @@ def   Pr_h_solve(V1, V2, V, Vt, u, domain_nb, ovlp_value):
        
 #==============================================================================
 #.......Poisson ALGORITHM
+#==============================================================================
 def poisson_solve(V1, V2, V, u_d = None):
        u                   = StencilVector(V.vector_space)
        # ++++
@@ -119,7 +122,7 @@ xuh_01   = []
 iter_max = 20
 
 #------------------------------------------------------------
-#..... Initialisation and computing optimal mapping for 16*16
+#..... Initialisation 
 #------------------------------------------------------------
 nelements  = 32
 
@@ -166,7 +169,7 @@ for i in range(iter_max):
 #---Compute a solution
 nbpts = 100
 # # ........................................................
-# ....................For testing in one nelements
+# ....................For a plot
 # #.........................................................
 if True :
 	#---Compute a solution
