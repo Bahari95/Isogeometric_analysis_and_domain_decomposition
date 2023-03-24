@@ -17,9 +17,9 @@ assemble_matrix_ex01 = compile_kernel(assemble_matrix_ex11, arity=2)
 assemble_matrix_ex10 = compile_kernel(assemble_matrix_ex12, arity=2)
 
 #---In Poisson equation
-from gallery_section_04 import assemble_vector_ex01    #---1 : In uniform mesh
-from gallery_section_04 import assemble_matrix_un_ex01 #---1 : In uniform mesh
-from gallery_section_04 import assemble_norm_ex01      #---1 : In uniform mesh
+from gallery_section_04 import assemble_vector_ex01    
+from gallery_section_04 import assemble_matrix_un_ex01 
+from gallery_section_04 import assemble_norm_ex01      
 
 assemble_stiffness2D = compile_kernel(assemble_matrix_un_ex01, arity=2)
 assemble_rhs         = compile_kernel(assemble_vector_ex01, arity=1)
@@ -44,7 +44,8 @@ import timeit
 import time
 
 #==============================================================================
-#.......Poisson ALGORITHM
+# ... Poisson ALGORITHM
+#==============================================================================
 def poisson_solve(V1, V2, V3, V, V_TOT, u_d, S_DDM, domain_nb, ovlp_value):
        u                   = StencilVector(V.vector_space)
        # ++++
@@ -144,7 +145,7 @@ xuh_01      = []
 iter_max    = 10
 S_DDM       = alpha/(nelements+1)
 #----------------------
-#..... Initialisation and computing optimal mapping for 16*16
+#..... Initialisation 
 #----------------------
 grids_0 = linspace(0, alpha, nelements+1)
 # create the spline space for each direction
@@ -191,7 +192,7 @@ for i in range(iter_max):
 #---Compute a solution
 nbpts = 100
 # # ........................................................
-# ....................For testing in one nelements
+# ....................For a plot
 # #.........................................................
 if True :
 	#---Compute a solution
