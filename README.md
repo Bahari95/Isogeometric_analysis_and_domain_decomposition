@@ -1,6 +1,4 @@
-# Isogeometric_analysis_for_domain_decomposition
-
-## Schwarz methods for domain decomposition using Isogeoemetric Analaysis:
+#  Schwarz methods for domain decomposition using Isogeoemetric Analaysis:
 
 ** Three dimension for Poisson is avialable **
 
