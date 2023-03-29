@@ -1,4 +1,4 @@
-# Isogeometric_analysis_for_domain_decomposition_Poisson_equation
+# Isogeometric_analysis_for_domain_decomposition
 
 ## Schwarz methods for domain decomposition using Isogeoemetric Analaysis:
 
