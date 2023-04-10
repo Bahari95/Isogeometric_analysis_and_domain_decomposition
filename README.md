@@ -16,7 +16,10 @@
   https://github.com/Bahari95/simplines
 
 ## The Poisson equation using Robin boundary conditions
-
+#### (left) real solution evolution (right) solution for the last iteration
+![PNG](https://github.com/Bahari95/Isogeometric_analysis_for_domain_decomposition/blob/main/two_dimension/parallel_Schwarz_method_Robin/on_more_general_geometries/Quart_annulus.png)
+#### (left) approximate and (right) exact solution
+![PNG](https://github.com/Bahari95/Isogeometric_analysis_for_domain_decomposition/blob/main/two_dimension/parallel_Schwarz_method_Robin/on_more_general_geometries/Quart_annulus_3D.png)
 
 ## The Helmholtz equation with wave number K = 20
 
