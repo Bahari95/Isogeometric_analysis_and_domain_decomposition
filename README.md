@@ -21,7 +21,7 @@
 #### (left) approximate and (right) exact solution
 ![PNG](https://github.com/Bahari95/Isogeometric_analysis_for_domain_decomposition/blob/main/two_dimension/parallel_Schwarz_method_Robin/on_more_general_geometries/Quart_annulus_3D.png)
 
-## The Helmholtz equation with wave number K = 20
+## The Helmholtz equation with wave number K = 20 using Dirichlet
 
 https://doi.org/10.1016/j.cma.2018.02.020
   
