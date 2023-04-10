@@ -15,6 +15,9 @@
 
   https://github.com/Bahari95/simplines
 
+## The Poisson equation using Robin boundary conditions
+
+
 ## The Helmholtz equation with wave number K = 20
 
 https://doi.org/10.1016/j.cma.2018.02.020
