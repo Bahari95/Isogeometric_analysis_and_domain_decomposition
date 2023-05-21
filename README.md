@@ -15,6 +15,10 @@
 
   https://github.com/Bahari95/simplines
   
+  
+## Some Examples:
+
+
 ## The 1D Poisson equation using Dirichlet boundary conditions : solution evolution
 ![PNG](https://github.com/Bahari95/Isogeometric_analysis_for_domain_decomposition/blob/main/one_dimension/parallel_Schwarz_method_Dirichlet/DD_sol_evol.png)
 
