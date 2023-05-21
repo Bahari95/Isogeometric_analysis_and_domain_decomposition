@@ -14,8 +14,11 @@
 # For simplines :
 
   https://github.com/Bahari95/simplines
+  
+## The 1D Poisson equation using Dirichlet boundary conditions : solution evolution
+![PNG](https://github.com/Bahari95/Isogeometric_analysis_for_domain_decomposition/blob/main/one_dimension/parallel_Schwarz_method_Dirichlet/DD_sol_evol.png)
 
-## The Poisson equation using Robin boundary conditions
+## The Poisson equation using Robin boundary conditions : 
 #### Projection : (left) solution evolution (right) solution for the last iteration
 ![PNG](https://github.com/Bahari95/Isogeometric_analysis_for_domain_decomposition/blob/main/two_dimension/parallel_Schwarz_method_Robin/on_more_general_geometries/Quart_annulus.png)
 #### (left) approximate and (right) exact solution
