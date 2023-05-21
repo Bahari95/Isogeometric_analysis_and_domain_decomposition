@@ -153,3 +153,13 @@ plt.figure()
 plot_field_1d(V_0.knots, V_0.degree, xuh, nx=101, color='b')
 plot_field_1d(V_1.knots, V_1.degree, xuh_1, nx=101, color='r')
 plt.show()
+
+# # ........................................................
+# ....................For a plot
+# #.........................................................
+if True :
+	plt.figure()
+	for i in range(iter_max):
+		plot_field_1d(V_0.knots, V_0.degree, xuh_0[i],  nx=101, color='b')
+		plot_field_1d(V_1.knots, V_1.degree, xuh_01[i], nx=101, color='r')
+	plt.show()
