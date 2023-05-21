@@ -1,7 +1,7 @@
 #  Schwarz methods for domain decomposition using Isogeoemetric Analaysis:
 
 ** Three dimension for Poisson is avialable **
-## TODO : OPTIMIZE THE CODES IN 2-3 D
+## TODO : OPTIMIZE THE CODE IN 2-3 D
 
 ## Please install pyccel and start enjoying your research with a simple implementation using simplines
 
