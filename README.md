@@ -1,7 +1,7 @@
 #  Schwarz methods for domain decomposition using Isogeoemetric Analaysis:
 
 ** Three dimension for Poisson is avialable **
-## TODO : OPTIMIZE THE CODE IN 2-3 D
+## TODO : Parallel Programming
 The regularity of the degree in the whole domain is avialable (1D) but requires authorization.
 https://github.com/Bahari95/pure-python-basic-cods/tree/main/degree_regularity_ddm
 
