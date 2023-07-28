@@ -46,27 +46,30 @@ import time
 #==============================================================================
 # ... Poisson ALGORITHM
 #==============================================================================
-def poisson_solve(V1, V2, V3, V, V_TOT, u_d, S_DDM, domain_nb, ovlp_value):
-       u                   = StencilVector(V.vector_space)
-       # ++++
+#==============================================================================
+#.......Poisson ALGORITHM
+#==============================================================================
+class DDM_poisson(object):
+   def __init__(self, V1, V2, V3, V, V_TOT, S_DDM, domain_nb, ovlp_value):
+       '''
        #... We delete the first and the last spline function
        #. as a technic for applying Dirichlet boundary condition
-
+       '''
        #..Stiffness and Mass matrix in 1D in the first deriction
        K1                  = assemble_stiffness1D(V1)
        K1                  = K1.tosparse()
        if domain_nb == 0 :
-          K1                  = K1.toarray()[1:,1:]
+          K1               = K1.toarray()[1:,1:]
        else :
-          K1                  = K1.toarray()[:-1,:-1]
+          K1               = K1.toarray()[:-1,:-1]
        K1                  = csr_matrix(K1)
 
        M1                  = assemble_mass1D(V1)
        M1                  = M1.tosparse()
        if domain_nb == 0 :
-           M1                  = M1.toarray()[1:,1:]
+           M1              = M1.toarray()[1:,1:]
        else :
-           M1                  = M1.toarray()[:-1,:-1]
+           M1              = M1.toarray()[:-1,:-1]
        M1                  = csr_matrix(M1)
 
        # Stiffness and Mass matrix in 1D in the second deriction
@@ -100,30 +103,43 @@ def poisson_solve(V1, V2, V3, V, V_TOT, u_d, S_DDM, domain_nb, ovlp_value):
            Id[0,0]         = S_DDM
        # ...
        M                   = kron(K1,kron(M2,M3))+kron(M1,kron(K2,M3))+kron(M1,kron(M2,K3)) + kron(Id,kron(M2,M3))
-       lu                  = sla.splu(csc_matrix(M))
+       # ...
+       self.lu             = sla.splu(csc_matrix(M))
+       self.domain_nb      = domain_nb
+       self.S_DDM          = S_DDM
+       self.ovlp_value     = ovlp_value
+       self.sp             = [V, V_TOT]
+       self.nbasis_1       = (V1.nbasis-1)*(V2.nbasis-2)*(V3.nbasis-2)
+       self.nbasis_2       = [V1.nbasis-1,V2.nbasis-2,V3.nbasis-2]
+
+   def solve(self, u_d):
+       ''''
+       Solve Poisson equation
+       '''
+       V, V_TOT              = self.sp[:]
+       # ...
+       u                     = StencilVector(V.vector_space)
        # ++++
        #--Assembles a right hand side of Poisson equation
-       rhs                 = StencilVector(V.vector_space)
-       rhs                 = assemble_rhs( V_TOT, fields = [u_d], knots = True, value = [ovlp_value, S_DDM, domain_nb], out = rhs )
-       b                   = rhs.toarray()
-       b                   = b.reshape(V.nbasis)
-       if domain_nb == 0 :
-          b                   = b[1:, 1:-1, 1:-1]      
+       rhs                   = StencilVector(V.vector_space)
+       rhs                   = assemble_rhs( V_TOT, fields = [u_d], knots = True, value = [self.ovlp_value, self.S_DDM, self.domain_nb], out = rhs )
+       b                     = rhs.toarray()
+       b                     = b.reshape(V.nbasis)
+       if self.domain_nb == 0 :
+          b                  = b[1:, 1:-1, 1:-1]      
        else :
-          b                   = b[:-1, 1:-1, 1:-1]      
-       b                   = b.reshape((V1.nbasis-1)*(V2.nbasis-2)*(V3.nbasis-2))
+          b                  = b[:-1, 1:-1, 1:-1]      
+       b                     = b.reshape(self.nbasis_1)
        # ...
-       xkron               = lu.solve(b)       
-       xkron               = xkron.reshape([V1.nbasis-1,V2.nbasis-2,V3.nbasis-2])
+       xkron                 = self.lu.solve(b)       
+       xkron                 = xkron.reshape(self.nbasis_2)
        # ...
-       x                   = np.zeros(V.nbasis)
-       if domain_nb == 0 :
+       x                     = np.zeros(V.nbasis)
+       if self.domain_nb == 0 :
           x[1:, 1:-1, 1:-1]  = xkron
        else :
           x[:-1, 1:-1, 1:-1] = xkron
-       #... Dirichlet nboundary
-       #x[0,:,:]            = u_d.toarray().reshape(V.nbasis)[0,:,:]
-       #x[-1,:,:]           = u_d.toarray().reshape(V.nbasis)[-1,:,:]
+       #...
        u.from_array(V, x)
        # ...
        Norm                = assemble_norm_l2(V, fields=[u]) 
@@ -164,15 +180,19 @@ V_1     = TensorSpace(V1_1, V2_1, V3_1)
 Vt_0    = TensorSpace(V1_0, V2_0, V3_0, V1_1, V2_1, V3_1)
 Vt_1    = TensorSpace(V1_1, V2_1, V3_1, V1_0, V2_0, V3_0)
 
+# --- Initialization
+P0      = DDM_poisson(V1_0, V2_0, V3_0, V_0, Vt_0, S_DDM, 0, alpha )
+P1      = DDM_poisson(V1_1, V2_1, V3_1, V_1, Vt_1, S_DDM, 1, beta)
+
 # ... communication Dirichlet interface
 u_00    = StencilVector(V_0.vector_space)
 u_1     = StencilVector(V_1.vector_space)
 
 print('#---IN-UNIFORM--MESH')
-u_0,   xuh, l2_norm, H1_norm     = poisson_solve(V1_0, V2_0, V3_0, V_0, Vt_0, u_1, S_DDM, 0, alpha )
+u_0,   xuh, l2_norm, H1_norm     = P0.solve(u_1)
 u_00 = u_0
 xuh_0.append(xuh)
-u_1, xuh_1, l2_norm1, H1_norm1   = poisson_solve(V1_1, V2_1, V3_1, V_1, Vt_1, u_0, S_DDM, 1, beta )
+u_1, xuh_1, l2_norm1, H1_norm1   = P1.solve(u_0)
 xuh_01.append(xuh_1)
 l2_err = l2_norm + l2_norm1
 H1_err = H1_norm + H1_norm1
@@ -180,9 +200,9 @@ print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
 
 for i in range(iter_max):
 	#...
-	u_0,   xuh, l2_norm, H1_norm     = poisson_solve(V1_0, V2_0, V3_0, V_0, Vt_0, u_1, S_DDM, 0, alpha )
+	u_0,   xuh, l2_norm, H1_norm     = P0.solve(u_1)
 	xuh_0.append(xuh)
-	u_1, xuh_1, l2_norm1, H1_norm1   = poisson_solve(V1_1, V2_1, V3_1, V_1, Vt_1, u_00, S_DDM, 1, beta )
+	u_1, xuh_1, l2_norm1, H1_norm1   = P1.solve(u_00)
 	xuh_01.append(xuh_1)
 	u_00 = u_0
 	l2_err = l2_norm + l2_norm1
