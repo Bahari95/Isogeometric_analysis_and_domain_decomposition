@@ -52,117 +52,130 @@ from   numpy                        import cos, sin, pi, exp, sqrt, arctan2
 from   tabulate                     import tabulate
 import numpy                        as     np
 
-#==============================================================================    
-# ... projection of a solution in a sub-domain to another sub-domain
-#==============================================================================    
-def   Pr_h_solve(V1, V2, V, Vt, u, u_d, domain_nb, ovlp_value): 
+class DDM_Helmholtz(object):
 
-       # Stiffness and Mass matrix in 1D in the first deriction
-       M1         = assemble_mass1D(V1)
-       M1         = M1.tosparse()
-       # ...
-       M          = M1
-       lu         = sla.splu(csc_matrix(M))
+    def __init__(self, V0, V1, V2, V, Vt, domain_nb, ovlp_value):
 
-       #...
-       rhs        = StencilVector(V1.vector_space)
-       rhs        = assemble_Pr(Vt, fields = [u], knots = True, value = [ovlp_value], out = rhs) 
-       b          = rhs.toarray()
-       
-       #---Solve a linear system
-       x          = lu.solve(b)
-       # ---
-       x_n        = zeros(V.nbasis)
-       if domain_nb == 0 :
-          x_n[-1,:]  = x[:]
-       else :
-          x_n[0,:]   = x[:]       
-       # ---
-       u_L2       = StencilVector(V.vector_space)
-       u_L2.from_array(V, x_n)
-       
-       # ... TOLERANCE
-       M2         = assemble_mass1D(V2)
-       M2         = M2.tosparse()
-       M          = kron(M1, M2)
-       dx         = u_L2.toarray() - u_d.toarray()
-       l2_residual = sqrt(dx.dot(M.dot(dx)) )
-       print( "l2_residual=============================", l2_residual)
-       return u_L2, x_n
-
-#==============================================================================
-#.......Poisson ALGORITHM
-#==============================================================================  
-def Helmholtz_solve(V1, V2 , V, domain_nb, Vh = None, u_d = None, u_dc = None):
-
-       u   = StencilVector(V.vector_space)
-       v   = StencilVector(V.vector_space)
        # ...
        stiffness  = assemble_stiffness(V)
        stiffnessc = assemble_stiffnessc(V)
-
-       rhs        = assemble_rhs( V, fields = [u_dc])
-       rhsc       = assemble_rhsc( V, fields = [u_d] )
-
-       #--Solve a linear system
-       n_basis                    = V1.nbasis*V2.nbasis
+       #-- Build lift hand side of a linear system
+       n_basis                    = V0.nbasis*V1.nbasis
        M                          = zeros((n_basis*2,n_basis*2))
        # ..
        b                          = zeros(n_basis*2)
        if domain_nb == 0 :
-          stiffness  = apply_dirichlet(V, stiffness, dirichlet =[[False, True],[False, False]])
-          rhs        = apply_dirichlet(V, rhs, dirichlet =[[False, True],[False, False]])
-
+          stiffness  = apply_dirichlet(V, stiffness,  dirichlet =[[False, True],[False, False]])
           stiffnessc = apply_dirichlet(V, stiffnessc, dirichlet =[[False, True],[False, False]])
-          rhsc       = apply_dirichlet(V, rhsc, dirichlet =[[False, True],[False, False]])
           
           M[:n_basis,:n_basis]       = -1*(stiffnessc.tosparse()).toarray()[:,:]
           M[n_basis:,n_basis:]       =    (stiffnessc.tosparse()).toarray()[:,:]
           M[n_basis:,:n_basis]       = (stiffness.tosparse()).toarray()[:,:]
           M[:n_basis,n_basis:]       = (stiffness.tosparse()).toarray()[:,:]
 
-          b[:n_basis]                = rhs.toarray()[:] 
-          b[n_basis:]                = rhsc.toarray()[:]
        else :
-          stiffness  = apply_dirichlet(V, stiffness, dirichlet =[[True, False],[False, False]])
-          rhs        = apply_dirichlet(V, rhs, dirichlet =[[True, False],[False, False]])
-
+          stiffness  = apply_dirichlet(V, stiffness,  dirichlet =[[True, False],[False, False]])
           stiffnessc = apply_dirichlet(V, stiffnessc, dirichlet =[[True, False],[False, False]])
-          rhsc       = apply_dirichlet(V, rhsc, dirichlet =[[True, False],[False, False]])
           
           M[:n_basis,:n_basis]       = -1*(stiffnessc.tosparse()).toarray()[:,:]
           M[n_basis:,n_basis:]       =    (stiffnessc.tosparse()).toarray()[:,:]
           M[n_basis:,:n_basis]       = (stiffness.tosparse()).toarray()[:,:]
           M[:n_basis,n_basis:]       = (stiffness.tosparse()).toarray()[:,:]
 
-          b[:n_basis]                = rhs.toarray()[:] 
-          b[n_basis:]                = rhsc.toarray()[:]
-       #cond_M = linalg.cond(M.toarray())
-       lu      = sla.splu(csc_matrix(M))
+       # ...
+       # Stiffness and Mass matrix in 1D in the first deriction
+       mass1               = assemble_mass1D(V1)
+       mass1               = mass1.tosparse()
+       mass2               = assemble_mass1D(V2)
+       mass2               = mass2.tosparse()
 
-       x       = lu.solve(b)
+       # ...
+       self.lu             = sla.splu(csc_matrix(M))
+       self.mlu            = sla.splu(csc_matrix(mass1))
+       # ...
+       self.mass           = kron(mass1, mass2)
+       self.V1             = V1
+       self.V              = V
+       self.Vt             = Vt
+       self.ovlp_value     = ovlp_value
+       self.domain_nb      = domain_nb
+       self.n_basis        = V0.nbasis*V1.nbasis
+                     
+    def Proj_solve(self, u, u_d):
+       '''
+       Projection of a solution in the other space
+       '''
+       # ...
+       rhs                 = StencilVector(self.V1.vector_space)
+       rhs                 = assemble_Pr(self.Vt, fields = [u], knots = True, value = [self.ovlp_value], out = rhs) 
+       b                   = rhs.toarray()
+       
+       #---Solve a linear system
+       x                   = self.mlu.solve(b)
+       # ---
+       x_n                 = zeros(self.V.nbasis)
+       if self.domain_nb == 0 :
+          x_n[-1,:]        = x[:]
+       else :
+          x_n[0,:]         = x[:]       
+       # ---
+       u_L2                = StencilVector(self.V.vector_space)
+       u_L2.from_array(self.V, x_n)
+       
+       # ... TOLERANCE
+       dx                  = u_L2.toarray() - u_d.toarray()
+       l2_residual         = sqrt(dx.dot(self.mass.dot(dx)) )
+       print( "l2_residual=============================", l2_residual)
+       return u_L2, x_n
+       
+    def solve(self,  u_d = None, u_dc = None):
+       '''
+       Solve Helmholtz equation
+       '''
+       u                     = StencilVector(self.V.vector_space)
+       v                     = StencilVector(self.V.vector_space)
+       # ... assembles rhs 
+       rhs                   = assemble_rhs( self.V, fields = [u_dc])
+       rhsc                  = assemble_rhsc(self.V, fields = [u_d] )
+
+       #-- Build right hand side of a linear system
+       b                     = zeros(self.n_basis*2)
+       if self.domain_nb == 0 :
+          rhs                = apply_dirichlet(self.V, rhs, dirichlet =[[False, True],[False, False]])
+          rhsc               = apply_dirichlet(self.V, rhsc, dirichlet =[[False, True],[False, False]])
+
+          b[:self.n_basis]   = rhs.toarray()[:] 
+          b[self.n_basis:]   = rhsc.toarray()[:]
+       else :
+          rhs                = apply_dirichlet(self.V, rhs, dirichlet =[[True, False],[False, False]])
+          rhsc               = apply_dirichlet(self.V, rhsc, dirichlet =[[True, False],[False, False]])
+
+          b[:self.n_basis]   = rhs.toarray()[:] 
+          b[self.n_basis:]   = rhsc.toarray()[:]
+
+       x                     = self.lu.solve(b)
        #... Dirichlet nboundary
-       xr       = x[:n_basis].reshape(V.nbasis)
-       xr[0,:  ]            += u_d.toarray().reshape(V.nbasis)[0,:]
-       xr[-1,: ]            += u_d.toarray().reshape(V.nbasis)[-1,:]
-       u.from_array(V, xr)
+       xr       = x[:self.n_basis].reshape(self.V.nbasis)
+       xr[0,:  ]            += u_d.toarray().reshape(self.V.nbasis)[0,:]
+       xr[-1,: ]            += u_d.toarray().reshape(self.V.nbasis)[-1,:]
+       u.from_array(self.V, xr)
        
-       xc       = x[n_basis:].reshape(V.nbasis)
-       xc[0,:  ]            += u_dc.toarray().reshape(V.nbasis)[0,:]
-       xc[-1,: ]            += u_dc.toarray().reshape(V.nbasis)[-1,:]
-       v.from_array(V, xc)
+       xc       = x[self.n_basis:].reshape(self.V.nbasis)
+       xc[0,:  ]            += u_dc.toarray().reshape(self.V.nbasis)[0,:]
+       xc[-1,: ]            += u_dc.toarray().reshape(self.V.nbasis)[-1,:]
+       v.from_array(self.V, xc)
        
-       Norm          = assemble_norm_l2(V, fields=[u], value = [0])
-       norm          = Norm.toarray()
-       l2_norm       = norm[0]
-       H1_norm       = norm[1]
+       Norm                  = assemble_norm_l2(self.V, fields=[u], value = [0])
+       norm                  = Norm.toarray()
+       l2_norm               = norm[0]
+       H1_norm               = norm[1]
 
-       Norm          = assemble_norm_l2(V, fields=[v], value = [1])
-       norm          = Norm.toarray()
-       l2_normc       = norm[0]
-       H1_normc       =  norm[1]
+       Norm                  = assemble_norm_l2(self.V, fields=[v], value = [1])
+       norm                  = Norm.toarray()
+       l2_normc              = norm[0]
+       H1_normc              = norm[1]
        
-       return u, v, xr, xc, l2_norm, H1_norm, l2_normc, H1_normc
+       return u, v, xr, xc, l2_norm, H1_norm, l2_normc, H1_normc    
     
 
 degree      = 4
@@ -195,6 +208,12 @@ V_1     = TensorSpace(V1_1, V2_1)
 #...
 Vt_0    = TensorSpace(V2_0, V1_1, V2_1)
 Vt_1    = TensorSpace(V2_1, V1_0, V2_0)
+
+
+# ... INITIALIZATION
+H0      = DDM_Helmholtz(V1_0, V2_0, V2_1, V_0, Vt_0, 0, alpha)
+H1      = DDM_Helmholtz(V1_1, V2_1, V2_0, V_1, Vt_1, 1, beta)
+
 # ... communication Dirichlet interface
 uh_d1   = StencilVector(V_0.vector_space)
 uh_d1c   = StencilVector(V_0.vector_space)
@@ -202,9 +221,9 @@ uh_d0   = StencilVector(V_1.vector_space)
 uh_d0c   = StencilVector(V_1.vector_space)
 
 print('#---IN-UNIFORM--MESH')
-u_0, u_0c, xuh, xuhc, l2_norm, H1_norm, l2_normc, H1_normc  = Helmholtz_solve(V1_0, V2_0, V_0, 0, u_d= uh_d1, u_dc= uh_d1c)
+u_0, u_0c, xuh, xuhc, l2_norm, H1_norm, l2_normc, H1_normc  = H0.solve( u_d= uh_d1, u_dc= uh_d1c)
 xuh_0.append(xuh)
-u_1, u_1c, xuh_1, xuh_1c, l2_norm1, H1_norm1, l2_norm1c, H1_norm1c  = Helmholtz_solve(V1_1, V2_1, V_1, 1, u_d= uh_d0, u_dc= uh_d0c)
+u_1, u_1c, xuh_1, xuh_1c, l2_norm1, H1_norm1, l2_norm1c, H1_norm1c  = H1.solve( u_d= uh_d0, u_dc= uh_d0c)
 xuh_01.append(xuh_1)
 
 l2_err = l2_norm + l2_norm1
@@ -214,14 +233,14 @@ print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
 
 for i in range(iter_max):
 	# ... Dirichlezt boudndary condition in x = 0.75 and 0.25
-	uh_d1, xh_d                      = Pr_h_solve(V2_0, V2_1, V_0, Vt_0, u_1, uh_d1, 0, alpha)
-	uh_d1c, xh_dc                    = Pr_h_solve(V2_0, V2_1, V_0, Vt_0, u_1c, uh_d1c, 0, alpha)
-	uh_d0, xh                        = Pr_h_solve(V2_1, V2_0, V_1, Vt_1, u_0, uh_d0, 1, beta)
-	uh_d0c, xhc                      = Pr_h_solve(V2_1, V2_0, V_1, Vt_1, u_0c,uh_d0c, 1, beta)
+	uh_d1, xh_d                      = H0.Proj_solve(u_1, uh_d1  )
+	uh_d1c, xh_dc                    = H0.Proj_solve(u_1c, uh_d1c)
+	uh_d0, xh                        = H1.Proj_solve(u_0, uh_d0  )
+	uh_d0c, xhc                      = H1.Proj_solve(u_0c, uh_d0c)
 	#...
-	u_0, u_0c, xuh, xuhc, l2_norm, H1_norm, l2_normc, H1_normc  = Helmholtz_solve(V1_0, V2_0, V_0, 0, u_d= uh_d1, u_dc= uh_d1c)
+	u_0, u_0c, xuh, xuhc, l2_norm, H1_norm, l2_normc, H1_normc  = H0.solve( u_d= uh_d1, u_dc= uh_d1c)
 	xuh_0.append(xuh)
-	u_1, u_1c, xuh_1, xuh_1c, l2_norm1, H1_norm1, l2_norm1c, H1_norm1c  = Helmholtz_solve(V1_1, V2_1, V_1, 1, u_d= uh_d0, u_dc= uh_d0c)
+	u_1, u_1c, xuh_1, xuh_1c, l2_norm1, H1_norm1, l2_norm1c, H1_norm1c  = H1.solve( u_d= uh_d0, u_dc= uh_d0c)
 	xuh_01.append(xuh_1)
 	l2_err = l2_norm + l2_norm1
 	H1_err = H1_norm + H1_norm1
