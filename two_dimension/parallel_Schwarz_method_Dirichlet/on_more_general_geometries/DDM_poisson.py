@@ -25,7 +25,7 @@ from gallery_section_04 import assemble_matrix_ex01
 
 
 assemble_mass2D      = compile_kernel(assemble_matrix_un_ex01, arity=2)
-assemble_stiffness3D = compile_kernel(assemble_matrix_ex01, arity=2)
+assemble_stiffness2D = compile_kernel(assemble_matrix_ex01, arity=2)
 assemble_rhs         = compile_kernel(assemble_vector_ex01, arity=1)
 assemble_norm_l2     = compile_kernel(assemble_norm_ex01, arity=1)
 assemble_Pr          = compile_kernel(assemble_vector_ex02, arity=1)
@@ -50,61 +50,79 @@ import time
 
 from tabulate import tabulate
 
-#============================================================================== 
-# ... projection of a solution in a sub-domain to another sub-domain
-#============================================================================== 
-def   Pr_h_solve(V1, V2, V, Vt, u, domain_nb, ovlp_value): 
+#==============================================================================
+#.......Poisson ALGORITHM
+#==============================================================================
 
+class DDM_poisson(object):
+
+    def __init__(self, V0, V1, V2, V, Vt, domain_nb, ovlp_value):
+
+       #..Stiffness matrix in 2D
+       stiffness           = assemble_stiffness2D(V)
+       stiffness           = apply_dirichlet(V, stiffness)
        # ...
-       stiffness     = assemble_mass2D(V1, value = [ovlp_value])
-       M             = stiffness.tosparse()
-       lu            = sla.splu(csc_matrix(M))
+       M                   = stiffness.tosparse()
+       
        # ...
-       rhs           = StencilVector(V1.vector_space)
-       rhs           = assemble_Pr(Vt, fields = [u], knots = True, value = [ovlp_value], out = rhs) 
+       mass                = assemble_mass2D(V1, value = [ovlp_value])
+       mass                = mass.tosparse()
+       
+       # ...
+       self.lu             = sla.splu(csc_matrix(M))
+       self.mlu            = sla.splu(csc_matrix(mass))
+       # ...
+       self.V1             = V1
+       self.V              = V
+       self.Vt             = Vt
+       self.ovlp_value     = ovlp_value
+       self.domain_nb      = domain_nb
+       self.nbasis_1       = (V0.nbasis-2)*(V1.nbasis-2)
+       self.nbasis_2       = [V0.nbasis-2,V1.nbasis-2]
+                     
+    def Proj_solve(self, u): 
+       '''
+       Projection of a solution in the other space
+       '''
+       # ...
+       rhs           = StencilVector(self.V1.vector_space)
+       rhs           = assemble_Pr(self.Vt, fields = [u], knots = True, value = [self.ovlp_value], out = rhs) 
        b             = rhs.toarray()
        
        #---Solve a linear system
-       x             = lu.solve(b)
+       x             = self.mlu.solve(b)
        # ---
-       x_n           = zeros(V.nbasis)
-       if domain_nb == 0 :
+       x_n           = zeros(self.V.nbasis)
+       if self.domain_nb == 0 :
           x_n[-1,:]  = x[:]
        else :
           x_n[0,:]   = x[:]       
        # ---
-       u_L2          = StencilVector(V.vector_space)
-       u_L2.from_array(V, x_n)
+       u_L2          = StencilVector(self.V.vector_space)
+       u_L2.from_array(self.V, x_n)
        
        return u_L2, x_n
        
-#==============================================================================
-#.......Poisson ALGORITHM
-#==============================================================================
-def poisson_solve(V1, V2, V, u_d = None):
-       u                   = StencilVector(V.vector_space)
-       # ++++
-       #..Stiffness matrix in 3D
-       stiffness           = assemble_stiffness3D(V)
-       stiffness           = apply_dirichlet(V, stiffness)
-       # ...
-       M                   = stiffness.tosparse()
-       lu                  = sla.splu(csc_matrix(M))
+    def solve(self, u_d = None):
+       '''
+       Solve Poisson equation
+       '''
+       u                   = StencilVector(self.V.vector_space)
        # ++++
        #--Assembles a right hand side of Poisson equation
-       rhs                 = assemble_rhs( V, fields = [u_d] )
-       rhs                 = apply_dirichlet(V, rhs)
+       rhs                 = assemble_rhs( self.V, fields = [u_d] )
+       rhs                 = apply_dirichlet(self.V, rhs)
        b                   = rhs.toarray()
        # ...
-       x                   = lu.solve(b)       
-       x                   = x.reshape(V.nbasis)
+       x                   = self.lu.solve(b)       
+       x                   = x.reshape(self.V.nbasis)
        # ...
        #... Dirichlet nboundary
-       x[0,:]              = u_d.toarray().reshape(V.nbasis)[0,:]
-       x[-1,:]             = u_d.toarray().reshape(V.nbasis)[-1,:]
-       u.from_array(V, x)
+       x[0,:]              = u_d.toarray().reshape(self.V.nbasis)[0,:]
+       x[-1,:]             = u_d.toarray().reshape(self.V.nbasis)[-1,:]
+       u.from_array(self.V, x)
        # ...
-       Norm                = assemble_norm_l2(V, fields=[u]) 
+       Norm                = assemble_norm_l2(self.V, fields=[u]) 
        norm                = Norm.toarray()
        l2_norm             = norm[0]
        H1_norm             = norm[1]       
@@ -140,14 +158,19 @@ V_1     = TensorSpace(V1_1, V2_1)
 #...
 Vt_0    = TensorSpace(V2_0, V1_1, V2_1)
 Vt_1    = TensorSpace(V2_1, V1_0, V2_0)
+
+# ...Initialization
+P0 = DDM_poisson(V1_0, V2_0, V2_1, V_0, Vt_0, 0, alpha)
+P1 = DDM_poisson(V1_1, V2_1, V2_0, V_1, Vt_1, 1, beta)
+
 # ... communication Dirichlet interface
 uh_d1   = StencilVector(V_0.vector_space)
 uh_d0   = StencilVector(V_1.vector_space)
 
 print('#---IN-UNIFORM--MESH')
-u_0,   xuh, l2_norm, H1_norm     = poisson_solve(V1_0, V2_0, V_0, u_d= uh_d1)
+u_0,   xuh, l2_norm, H1_norm     = P0.solve( u_d= uh_d1)
 xuh_0.append(xuh)
-u_1, xuh_1, l2_norm1, H1_norm1   = poisson_solve(V1_1, V2_1, V_1, u_d= uh_d0)
+u_1, xuh_1, l2_norm1, H1_norm1   = P1.solve( u_d= uh_d0)
 xuh_01.append(xuh_1)
 l2_err = l2_norm + l2_norm1
 H1_err = H1_norm + H1_norm1
@@ -155,12 +178,12 @@ print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
 
 for i in range(iter_max):
 	# ... Dirichlezt boudndary condition in x = 0.75 and 0.25
-	uh_d1, xh_d       = Pr_h_solve(V2_0, V2_1, V_0, Vt_0, u_1, 0, alpha)
-	uh_d0, xh         = Pr_h_solve(V2_1, V2_0, V_1, Vt_1, u_0, 1, beta)
+	uh_d1, xh_d       = P0.Proj_solve( u_1)
+	uh_d0, xh         = P1.Proj_solve( u_0)
 	#...
-	u_0,   xuh, l2_norm, H1_norm     = poisson_solve(V1_0, V2_0, V_0, u_d= uh_d1)
+	u_0,   xuh, l2_norm, H1_norm     = P0.solve( u_d= uh_d1)
 	xuh_0.append(xuh)
-	u_1, xuh_1, l2_norm1, H1_norm1   = poisson_solve(V1_1, V2_1, V_1, u_d= uh_d0)
+	u_1, xuh_1, l2_norm1, H1_norm1   = P1.solve( u_d= uh_d0)
 	xuh_01.append(xuh_1)
 	l2_err = l2_norm + l2_norm1
 	H1_err = H1_norm + H1_norm1
