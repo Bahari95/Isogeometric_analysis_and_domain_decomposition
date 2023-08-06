@@ -2,7 +2,7 @@
 
 ** Three dimension for Poisson is avialable **
 ## TODO : Parallel Programming
-The regularity of the degree in the whole domain is avialable (1D) but requires authorization.
+The regularity C^{degree} in the whole domain is avialable (1D) but requires authorization.
 https://github.com/Bahari95/pure-python-basic-cods/tree/main/degree_regularity_ddm
 
 ## Please install pyccel and start enjoying your research with a simple implementation using simplines
