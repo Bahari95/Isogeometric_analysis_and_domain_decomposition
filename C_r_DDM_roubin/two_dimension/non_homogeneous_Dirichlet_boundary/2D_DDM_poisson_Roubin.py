@@ -281,7 +281,7 @@ cax     = divider.append_axes("right", size="5%", pad=0.05, aspect = 40)
 plt.colorbar(im, cax=cax)
 fig.tight_layout()
 plt.subplots_adjust(wspace=0.3)
-plt.savefig('meshes_examples.png')
+plt.savefig('deriv_examples.png')
 plt.show()
 
 #~~~~~~~~~~~~~~~~~~~~
