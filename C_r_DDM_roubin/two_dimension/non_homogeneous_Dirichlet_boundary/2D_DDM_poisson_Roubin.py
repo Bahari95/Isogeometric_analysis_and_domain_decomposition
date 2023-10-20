@@ -284,6 +284,30 @@ plt.subplots_adjust(wspace=0.3)
 plt.savefig('meshes_examples.png')
 plt.show()
 
+#~~~~~~~~~~~~~~~~~~~~
+#.. Plot the surface
+figtitle  = 'mesh adaptation'
+
+fig, axes = plt.subplots( 1, 2, figsize=[12,12], gridspec_kw={'width_ratios': [2.75, 2]}, num=figtitle )
+for ax in axes:
+   ax.set_aspect('equal')
+
+axes[0].set_title('Ap. Sol. in the entire domain')
+ima     = axes[0].contourf( X, Y, w, cmap= 'magma')
+divider = make_axes_locatable(axes[0]) 
+caxe    = divider.append_axes("right", size="5%", pad=0.05, aspect = 40) 
+plt.colorbar(ima, cax=caxe)
+
+axes[1].set_title('Exact. Sol. in the entire domain')
+im      = axes[1].contourf( X, Y, solut(X, Y), cmap= 'magma')
+divider = make_axes_locatable(axes[1]) 
+cax     = divider.append_axes("right", size="5%", pad=0.05, aspect = 40) 
+plt.colorbar(im, cax=cax)
+fig.tight_layout()
+plt.subplots_adjust(wspace=0.3)
+plt.savefig('meshes_examples.png')
+plt.show()
+
 if True :
 	#---Compute a solution
 	u, ux, uy, X, Y               = pyccel_sol_field_2d((nbpts, nbpts),  xuh,   Vh_0.knots, Vh_0.degree, bound_val =(left_v, alpha, 0., 1.))
