@@ -170,8 +170,11 @@ plt.show()
 if True :
 	plt.figure()
 	for i in range(iter_max):
-		plot_field_1d(V_0.knots, V_0.degree, xuh_0[i],  nx=nbpts, xmin = left_v, xmax =alpha)
-		plot_field_1d(V_1.knots, V_1.degree, xuh_01[i], nx=nbpts, xmin = beta, xmax =right_v)
+		r = np.round(np.random.rand(),1)
+		g = np.round(np.random.rand(),1)
+		b = np.round(np.random.rand(),1)
+		plot_field_1d(V_0.knots, V_0.degree, xuh_0[i], nx=nbpts, color = [r,b,g], xmin = left_v, xmax =alpha)
+		plot_field_1d(V_1.knots, V_1.degree, xuh_01[i], nx=nbpts, color = [r,b,g], xmin = beta, xmax =right_v)
 	plt.show()
 	
 	
