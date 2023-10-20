@@ -89,12 +89,12 @@ class DDM_poisson(object):
        H1_norm             = norm[1]       
        return u, x, l2_norm, H1_norm
 
-degree      = 2
+degree      = 6
 quad_degree = degree + 1
 nelements   = 1012
 # .. interval boundary values
 left_v      = 0.
-right_v     = 2.
+right_v     = 1.
 
 # ... please take into account that : beta <= alpha 
 grid_g      = linspace(left_v, right_v, 2*nelements-1)
@@ -177,8 +177,6 @@ if True :
 		plot_field_1d(V_1.knots, V_1.degree, xuh_01[i], nx=nbpts, color = [r,b,g], xmin = beta, xmax =right_v)
 	plt.show()
 	
-	
-
 # -------------------------------------------------------
 # ... gethering results & CONSTRUCTION OF C^{p-1} solution
 # -------------------------------------------------------
