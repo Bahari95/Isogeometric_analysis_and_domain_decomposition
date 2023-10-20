@@ -1,0 +1,195 @@
+from simplines import compile_kernel
+
+from simplines import SplineSpace
+from simplines import TensorSpace
+from simplines import StencilMatrix
+from simplines import StencilVector
+from simplines import plot_field_1d
+
+# .. Matrices in 1D ..
+from gallery_section_04 import assemble_stiffnessmatrix1D
+from gallery_section_04 import assemble_vector_ex01   
+from gallery_section_04 import assemble_vector_ex02
+from gallery_section_04 import assemble_norm_ex01     
+
+assemble_stiffness1D   = compile_kernel( assemble_stiffnessmatrix1D, arity=2)
+assemble_rhs           = compile_kernel(assemble_vector_ex01, arity=1)
+assemble_basis         = compile_kernel(assemble_vector_ex02, arity=1)
+assemble_norm_l2       = compile_kernel(assemble_norm_ex01, arity=1)
+
+#from matplotlib.pyplot import plot, show
+import matplotlib.pyplot            as     plt
+#..
+from   scipy.sparse                 import kron
+from   scipy.sparse                 import csr_matrix
+from   scipy.sparse                 import csc_matrix, linalg as sla
+from   numpy                        import zeros, linalg, asarray, linspace
+from   numpy                        import cos, sin, pi, exp, sqrt, arctan2
+from   tabulate                     import tabulate
+import numpy                        as     np
+import timeit
+import time
+
+#==============================================================================
+#.......Poisson ALGORITHM
+class DDM_poisson(object):
+
+   def __init__(self, V, V2, S_DDM, domain_nb, ovlp_value):
+       # ++++
+       #... We delete the first and the last spline function
+       #. as a technic for applying Dirichlet boundary condition
+       
+       basis              = assemble_basis(V, knots = True, value = [ovlp_value])
+       basis              = basis.toarray()[0:V.degree]
+
+       #..Stiffness and Mass matrix in 1D in the first deriction
+       K                  = assemble_stiffness1D(V)
+       K                  = K.tosparse()
+       K                  = K.toarray()[1:-1,1:-1]
+
+       if domain_nb == 0 :
+          for i in range(0,V.degree):
+               K[-V.degree:,-i-1]   += S_DDM*(basis[:]*basis[i])
+       else :
+          for i in range(0,V.degree):
+               K[:V.degree,i]       += S_DDM*(basis[:]*basis[i])
+       K                  = csr_matrix(K)
+
+       # ...
+       self.lu             = sla.splu(csc_matrix(K))
+       
+       # ++++
+       self.spaces        = [V, V2]
+       self.ovlp_value    = ovlp_value
+       self.S_DDM         = S_DDM
+       self.domain_nb     = domain_nb
+   def solve(self, u_d):
+
+       V, Vh               = self.spaces[:]
+
+       #--Assembles a right hand side of Poisson equation
+       rhs                 = StencilVector(V.vector_space)
+       rhs                 = assemble_rhs( Vh, fields = [u_d], knots = True, value = [self.ovlp_value, self.S_DDM, self.domain_nb], out = rhs )
+       b                   = rhs.toarray()
+       # ... one coeff correspond to the dad basis function
+       b                   = b[1:-1] 
+       
+       #--- Solve a linear system
+       xkron               = self.lu.solve(b)       
+       # ...
+       x                   = np.zeros(V.nbasis)
+       x[1:-1]             = xkron[:]
+       #...
+       u  = StencilVector(V.vector_space)
+       u.from_array(V, x)
+       # ...
+       Norm                = assemble_norm_l2(V, fields=[u]) 
+       norm                = Norm.toarray()
+       l2_norm             = norm[0]
+       H1_norm             = norm[1]       
+       return u, x, l2_norm, H1_norm
+
+degree      = 2
+quad_degree = degree + 1
+nelements   = 1012
+# .. interval boundary values
+left_v      = 0.
+right_v     = 2.
+
+# ... please take into account that : beta <= alpha 
+grid_g      = linspace(left_v, right_v, 2*nelements-1)
+alpha       = grid_g[nelements-1]
+beta        = grid_g[nelements-1]
+overlap     = alpha - beta
+xuh_0       = []
+xuh_01      = []
+iter_max    = 10
+S_DDM       = 1./(beta)
+
+#--------------------------
+#..... Initialisation
+#--------------------------
+
+Igrid_0 = linspace(left_v, alpha, nelements+1)
+grids_0 = grid_g[0:nelements+1]
+
+# create the spline space for each direction
+V_0     = SplineSpace(degree=degree, nelements= nelements, grid = grids_0, nderiv = 2, quad_degree = quad_degree, sharing_grid = Igrid_0)
+
+Igrid_1 = linspace(beta, right_v, nelements+1)
+grids_1 = grid_g[nelements-2:]
+
+# create the spline space for each direction
+V_1    = SplineSpace(degree=degree, nelements= nelements, grid = grids_1, nderiv = 2, quad_degree = quad_degree, sharing_grid = Igrid_1)
+
+Vt_0    = TensorSpace(V_0, V_1)
+Vt_1    = TensorSpace(V_1, V_0)
+
+DDM_0 = DDM_poisson( V_0, Vt_0,  S_DDM, 0, alpha )
+DDM_1 = DDM_poisson( V_1, Vt_1,  S_DDM, 1, beta )
+
+# ... communication Dirichlet interface
+u_00    = StencilVector(V_0.vector_space)
+u_1     = StencilVector(V_1.vector_space)
+
+print('#---IN-UNIFORM--MESH')
+u_0,   xuh, l2_norm, H1_norm     = DDM_0.solve( u_1)
+u_1, xuh_1, l2_norm1, H1_norm1   = DDM_1.solve( u_00)
+u_0.from_array(V_0, xuh)
+u_1.from_array(V_1, xuh_1)
+
+xuh_0.append(xuh)
+xuh_01.append(xuh_1)
+u_00 = u_0
+l2_err = l2_norm + l2_norm1
+H1_err = H1_norm + H1_norm1
+print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
+
+for i in range(iter_max):
+	#...
+	u_0, xuh, l2_norm, H1_norm     = DDM_0.solve(u_1)
+	u_1, xuh_1, l2_norm1, H1_norm1 = DDM_1.solve(u_00)
+	# ...
+	xuh_0.append(xuh)
+	xuh_01.append(xuh_1)
+	u_00   = u_0
+	l2_err = l2_norm + l2_norm1
+	H1_err = H1_norm + H1_norm1
+	print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
+
+#---Compute a solution
+nbpts = 100
+plt.figure()
+plot_field_1d(V_0.knots, V_0.degree, xuh, nx=nbpts, color='b', xmin = left_v, xmax =alpha)
+plot_field_1d(V_1.knots, V_1.degree, xuh_1, nx=nbpts, color='r', xmin = beta, xmax =right_v)
+plt.show()
+
+# # ........................................................
+# ....................For a plot
+# #.........................................................
+if True :
+	plt.figure()
+	for i in range(iter_max):
+		plot_field_1d(V_0.knots, V_0.degree, xuh_0[i],  nx=nbpts, xmin = left_v, xmax =alpha)
+		plot_field_1d(V_1.knots, V_1.degree, xuh_01[i], nx=nbpts, xmin = beta, xmax =right_v)
+	plt.show()
+	
+	
+
+# -------------------------------------------------------
+# ... gethering results & CONSTRUCTION OF C^{p-1} solution
+# -------------------------------------------------------
+
+grid_x = linspace(left_v, right_v, 2*nelements-1)
+# create the spline space for each direction
+E1     = SplineSpace(degree=degree, nelements= 2*nelements-1, grid = grid_x, nderiv = 2, quad_degree = quad_degree)
+
+e                      = StencilVector(E1.vector_space)
+xh                     = np.zeros(E1.nbasis)
+xh[:V_0.nbasis-2]      = xuh[:-2]
+xh[V_0.nbasis-degree:] = xuh_1[2:]
+e.from_array(E1, xh)
+
+plt.figure()
+plot_field_1d(E1.knots, E1.degree, xh, nx=nbpts, xmin = left_v, xmax =right_v)
+plt.show()
