@@ -255,7 +255,7 @@ xh[V_1.nbasis-degree:,:]    = xuh_1[2:,:]
 eh.from_array(Eh, xh)
 
 # # ........................................................
-# .................... 
+# .................... Plot results
 # #.........................................................
 #---Solution in uniform mesh
 w, wx, wy, X,Y = pyccel_sol_field_2d((nbpts,nbpts),  xh, Eh.knots, Eh.degree)
@@ -305,7 +305,7 @@ cax     = divider.append_axes("right", size="5%", pad=0.05, aspect = 40)
 plt.colorbar(im, cax=cax)
 fig.tight_layout()
 plt.subplots_adjust(wspace=0.3)
-plt.savefig('meshes_examples.png')
+plt.savefig('Example.png')
 plt.show()
 
 if True :
