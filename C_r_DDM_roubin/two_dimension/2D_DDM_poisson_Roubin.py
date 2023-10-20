@@ -4,6 +4,7 @@ from simplines import SplineSpace
 from simplines import TensorSpace
 from simplines import StencilMatrix
 from simplines import StencilVector
+from simplines import plot_field_1d
 from simplines import pyccel_sol_field_2d
 
 # .. Matrices in 1D ..
@@ -184,7 +185,6 @@ for i in range(iter_max):
 	print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
 
 #---Compute a solution
-from simplines import plot_field_1d
 nbpts = 100
 plt.figure()
 plot_field_1d(V_0.knots, V_0.degree, xuh[:,20],   nx=nbpts, color='b', xmin = left_v, xmax = alpha)
