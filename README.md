@@ -1,9 +1,10 @@
 #  Schwarz methods for domain decomposition using Isogeoemetric Analaysis:
 
 ** Three dimension for Poisson is avialable **
-## TODO : Parallel Programming
-The regularity C^{degree-1} in the whole domain is avialable (1D) but requires authorization.
-https://github.com/Bahari95/pure-python-basic-cods/tree/main/degree_regularity_ddm
+## some papers
+https://sci-hub.se/https://doi.org/10.1016/j.cma.2019.07.010
+https://sci-hub.se/https://doi.org/10.1016/bs.hna.2020.09.002
+https://www.sciencedirect.com/science/article/abs/pii/S0167839618300396
 
 ## Please install pyccel and start enjoying your research with a simple implementation using simplines
 
