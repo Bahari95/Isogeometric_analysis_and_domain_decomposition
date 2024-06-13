@@ -66,7 +66,7 @@ class DDM_poisson(object):
        rhs                 = assemble_rhs( V_TOT, fields = [u_d], knots = True, value = [self.ovlp_value, self.S_DDM, self.domain_nb], out = rhs )
 
        if self.domain_nb == 0 :
-          rhs             = apply_dirichlet(V, rhs, dirichlet = [[True, False],[True, True]])
+          rhs              = apply_dirichlet(V, rhs, dirichlet = [[True, False],[True, True]])
        else :
           rhs              = apply_dirichlet(V, rhs, dirichlet = [[False, True],[True, True]])
        b                   = rhs.toarray()
@@ -93,8 +93,8 @@ beta        = 0.35
 overlap     = alpha - beta
 xuh_0       = []
 xuh_01      = []
-iter_max    = 20
-S_DDM       = alpha/(nelements+1)
+iter_max    = 100
+S_DDM       = 1./alpha**2 #alpha/(nelements+1)
 #--------------------------
 #..... Initialisation
 #--------------------------
@@ -139,6 +139,10 @@ for i in range(iter_max):
 	u_1, xuh_1, l2_norm1, H1_norm1 = P1.solve(u_00)
 	xuh_01.append(xuh_1)
 	u_00   = u_0
+	if abs(l2_err - l2_norm - l2_norm1) <=1e-10:
+	        iter_max = i+1
+	        print(iter_max)
+	        break
 	l2_err = l2_norm + l2_norm1
 	H1_err = H1_norm + H1_norm1
 	print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))

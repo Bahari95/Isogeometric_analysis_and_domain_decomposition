@@ -120,7 +120,7 @@ def assemble_matrix_un_ex01(ne1, ne2,
                     F1y      = -(2.0*x1-1.0)*(2.0*x2-1.0)/sqrt(1.0-0.5*(2.0*x2-1.0)**2)
                     F2y      = 2.0*sqrt(1.0-0.5*(2.0*x1-1.0)**2)
                     F2x      = -(2.0*x1-1.0)*(2.0*x2-1.0)/sqrt(1.0-0.5*(2.0*x1-1.0)**2)
-                    det_Hess = abs(F1x*F2y-F1y*F2x)
+                    det_Hess = sqrt(F2y**2+F1y**2)
 
                     J_mat[0, g2]      = det_Hess
                     
@@ -155,7 +155,7 @@ def assemble_matrix_un_ex01(ne1, ne2,
                     F1y      = -(2.0*x1-1.0)*(2.0*x2-1.0)/sqrt(1.0-0.5*(2.0*x2-1.0)**2)
                     F2y      = 2.0*sqrt(1.0-0.5*(2.0*x1-1.0)**2)
                     F2x      = -(2.0*x1-1.0)*(2.0*x2-1.0)/sqrt(1.0-0.5*(2.0*x1-1.0)**2)
-                    det_Hess = abs(F1x*F2y-F1y*F2x)
+                    det_Hess = sqrt(F2y**2+F1y**2)
 
                     J_mat[0, g2]      = det_Hess
                     
@@ -341,10 +341,12 @@ def assemble_vector_ex01(ne1, ne2, ne3, ne4, p1, p2, p3, p4, spans_1, spans_2,  
     # Assembles Neumann Condition
     if domain_nb == 0 :
       i1_ovrlp  = ne1+2*p1-1
-      neum_sign = 1.
+      neum_sign1 = -1.
+      neum_sign2 = 1.
     else :
       i1_ovrlp  = p1
-      neum_sign = -1.
+      neum_sign1 = 1.
+      neum_sign2 = -1.
                 
     for ie2 in range(0, ne2):
            i_span_2 = spans_2[ie2]
@@ -395,26 +397,21 @@ def assemble_vector_ex01(ne1, ne2, ne3, ne4, p1, p2, p3, p4, spans_1, spans_2,  
                     F1    = (2.0*x1-1.0)*sqrt(1.0-0.5*(2.0*x2-1.0)**2)
                     F2    = (2.0*x2-1.0)*sqrt(1.0-0.5*(2.0*x1-1.0)**2)
                     F1x   = 2.0*sqrt(1.0-0.5*(2.0*x2-1.0)**2)
-                    F1xx  = 0.0
                     F1y   = -(2.0*x1-1.0)*(2.0*x2-1.0)/sqrt(1.0-0.5*(2.0*x2-1.0)**2)
-                    F1xy  = -2.0*(2.0*x2-1.0)/sqrt(1.0-0.5*(2.0*x2-1.0)**2)
-                    F1yy  = -2.0*(2.0*x1-1.0)/sqrt(1.0-0.5*(2.0*x2-1.0)**2)**3
 
                     F2y   = 2.0*sqrt(1.0-0.5*(2.0*x1-1.0)**2)
-                    F2yy  = 0.0
                     F2x   = -(2.0*x1-1.0)*(2.0*x2-1.0)/sqrt(1.0-0.5*(2.0*x1-1.0)**2)
-                    F2xx  = -2.0*(2.0*x2-1.0)/sqrt(1.0-0.5*(2.0*x1-1.0)**2)**3
-                    F2xy  = -2.0*(2.0*x1-1.0)/sqrt(1.0-0.5*(2.0*x1-1.0)**2)
 
                     det_Hess = abs(F1x*F2y-F1y*F2x)
-                    tang_1         =  (F1yy*(F1y**2+ F2y**2) - F1y*(F1yy*F1y + F2yy*F2y) )/(sqrt(F1y**2+ F2y**2)**3)
-                    tang_2         =  (F2yy*(F1y**2+ F2y**2) - F2y*(F1yy*F1y + F2yy*F2y) )/(sqrt(F1y**2+ F2y**2)**3)
                     # ...
-                    comp_1         = ( F2y*ux - F2x*uy)/det_Hess * tang_1/sqrt(tang_1**2+tang_2**2)
-                    comp_2         = (-F1y*ux + F1x*uy)/det_Hess * tang_2/sqrt(tang_1**2+tang_2**2)
+                    #comp_1         = ( F2y*ux - F2x*uy)/det_Hess * tang_1/sqrt(tang_1**2+tang_2**2)
+                    #comp_2         = (-F1y*ux + F1x*uy)/det_Hess * tang_2/sqrt(tang_1**2+tang_2**2)
                     # ...
-                    lvalues_u[g2]  = u * det_Hess
-                    lvalues_ux[g2] = -(comp_1 + comp_2)* sqrt(F1y**2+ F2y**2)
+                    comp_1         = neum_sign1 * ( F2y*ux - F2x*uy)/det_Hess * F2y #/sqrt(F1y**2+ F2y**2)
+                    comp_2         = neum_sign2 * (-F1y*ux + F1x*uy)/det_Hess * F1y #/sqrt(F1y**2+ F2y**2)
+                    # ...
+                    lvalues_u[g2]  = u * sqrt(F1y**2+ F2y**2)
+                    lvalues_ux[g2] = -(comp_1 + comp_2) #* sqrt(F1y**2+ F2y**2)
                                                 
            for il_2 in range(0, p2+1):
                  i2 = i_span_2 - p2 + il_2
