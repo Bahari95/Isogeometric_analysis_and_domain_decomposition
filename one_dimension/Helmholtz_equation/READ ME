@@ -1,0 +1,7 @@
+-u'' -w ^2u = 0,
+u(0)= 1,
+u'(1)-iwu(1) = 0,
+
+ i is complex number
+# .. exact solution is
+u = exp(iwx)
