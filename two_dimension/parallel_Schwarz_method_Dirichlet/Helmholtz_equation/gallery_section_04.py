@@ -37,14 +37,14 @@ def assemble_massmatrix1D(ne, degree, spans, basis, weights, points, matrix):
 #... utilities of Helmholtz equation
 #==============================================================================
 # .. in uniform mesh Matrix
-@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:,:,:]')
+@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'float', 'double[:,:,:,:]')
 def assemble_matrix_un_ex01(ne1, ne2,
                         p1, p2,
                         spans_1, spans_2,
                         basis_1, basis_2,
                         weights_1, weights_2,
                         points_1, points_2,
-                        matrix):
+                        K, matrix):
 
     # ... sizes
     k1 = weights_1.shape[1]
@@ -82,21 +82,19 @@ def assemble_matrix_un_ex01(ne1, ne2,
 
                                     wvol = weights_1[ie1, g1] * weights_2[ie2, g2]
                                     # ...
-                                    K    = 20.
-                                    # ...
                                     v += (bj_x1 * bi_x1 + bj_x2 * bi_x2) * wvol - K**2 * bi_0 * bj_0 * wvol
 
                             matrix[p1+i1, p2+i2, p1+j1-i1, p2+j2-i2]  += v
     # ...
 # .. in uniform mesh Matrix
-@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:,:,:]')
+@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'float', 'double[:,:,:,:]')
 def assemble_matrix_un_ex11(ne1, ne2,
                         p1, p2,
                         spans_1, spans_2,
                         basis_1, basis_2,
                         weights_1, weights_2,
                         points_1, points_2,
-                        matrix):
+                        K, matrix):
 
     # ... sizes
     k1 = weights_1.shape[1]
@@ -121,8 +119,6 @@ def assemble_matrix_un_ex11(ne1, ne2,
 
                                     wvol  = weights_2[ie2, g2]
                                     # ...
-                                    K     = 20.
-                                    # ...
                                     v    += K * bi_0 * bj_0 * wvol
 
                             matrix[p1, p2+i2, p1, p2+j2-i2]  += v
@@ -144,8 +140,6 @@ def assemble_matrix_un_ex11(ne1, ne2,
                                     bj_0  = basis_2[ie2, jl_2, 0, g2]
 
                                     wvol  = weights_2[ie2, g2]
-                                    # ...
-                                    K     = 20.
                                     # ...
                                     v    += K * bi_0 * bj_0 * wvol
 
@@ -169,8 +163,6 @@ def assemble_matrix_un_ex11(ne1, ne2,
 
                                     wvol  = weights_1[ie1, g1]
                                     # ...
-                                    K     = 20.
-                                    # ...
                                     v    += K* bi_0 * bj_0 * wvol
 
                             matrix[p1+i1, p2, p1+j1-i1, p2]  += v
@@ -193,16 +185,14 @@ def assemble_matrix_un_ex11(ne1, ne2,
 
                                     wvol  = weights_1[ie1, g1]
                                     # ...
-                                    K     = 20.
-                                    # ...
                                     v    += K* bi_0 * bj_0 * wvol
 
                             matrix[p1+i1, i_span_2+p2, p1+j1-i1, p2]  += v
     # ...
 #==============================================================================Assemble rhs Poisson
 #---1 : In uniform mesh
-@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]',  'double[:,:]',  'double[:,:]')
-def assemble_vector_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,  weights_1, weights_2, points_1, points_2, vector_d,  rhs):
+@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]',  'double[:,:]',  'float', 'double[:,:]')
+def assemble_vector_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,  weights_1, weights_2, points_1, points_2, vector_d, K,  rhs):
 
     from numpy import exp
     from numpy import cos
@@ -214,8 +204,6 @@ def assemble_vector_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2, 
     # ... sizes
     k1 = weights_1.shape[1]
     k2 = weights_2.shape[1]
-    # ...
-    K     = 20.
     # ...
     lcoeffs_d   = zeros((p1+1,p2+1))
     # ...
@@ -323,8 +311,8 @@ def assemble_vector_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2, 
 
 #==============================================================================Assemble rhs Poisson
 #---1 : In uniform mesh
-@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]',  'double[:,:]', 'double[:,:]')
-def assemble_vector_ex11(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,  weights_1, weights_2, points_1, points_2, vector_d,  rhs):
+@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]',  'double[:,:]', 'float', 'double[:,:]')
+def assemble_vector_ex11(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,  weights_1, weights_2, points_1, points_2, vector_d, K,  rhs):
 
     from numpy import exp
     from numpy import cos
@@ -338,8 +326,6 @@ def assemble_vector_ex11(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2, 
     k2 = weights_2.shape[1]
     # ...
     lcoeffs_d   = zeros((p1+1,p2+1))
-    # ...
-    K     = 20.
     # ...
     lvalues_u   = zeros((k1, k2))
     lvalues_udx = zeros((k1, k2))
@@ -485,7 +471,7 @@ def assemble_vector_ex02(ne1, ne2, ne3, p1, p2, p3, spans_1, spans_2,  spans_3, 
             # Check if point is exactly on left/right boundary, or outside domain
             if xq <= knots_2[low ]: 
                  span = low
-            if xq >= knots_2[high]: 
+            elif xq >= knots_2[high]: 
                  span = high-1
             else :
               # Perform binary search
@@ -552,7 +538,7 @@ def assemble_vector_ex02(ne1, ne2, ne3, p1, p2, p3, spans_1, spans_2,  spans_3, 
                     # Check if point is exactly on left/right boundary, or outside domain
                     if xq <= knots_2[low ]: 
                          span = low
-                    if xq >= knots_2[high]: 
+                    elif xq >= knots_2[high]: 
                          span = high-1
                     else :
                       # Perform binary search
@@ -597,8 +583,8 @@ def assemble_vector_ex02(ne1, ne2, ne3, p1, p2, p3, spans_1, spans_2,  spans_3, 
 
 #==============================================================================Assemble l2 and H1 error norm
 #---1 : In uniform mesh
-@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]',  'double[:,:]', 'int','double[:,:]')
-def assemble_norm_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,  weights_1, weights_2, points_1, points_2, vector_u, comp, rhs):
+@types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]',  'double[:,:]', 'int', 'float', 'double[:,:]')
+def assemble_norm_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,  weights_1, weights_2, points_1, points_2, vector_u, comp, K, rhs):
 
     from numpy import exp
     from numpy import cos
@@ -652,7 +638,6 @@ def assemble_norm_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,  w
 
                     x     = points_1[ie1, g1]
                     y     = points_2[ie2, g2]
-                    K     = 20.
                     theta = pi/4.
                     alpha    = K*(x*cos(theta) + y*sin(theta))
                     # ... test 0

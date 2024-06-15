@@ -54,11 +54,11 @@ import numpy                        as     np
 
 class DDM_Helmholtz(object):
 
-    def __init__(self, V0, V1, V2, V, Vt, domain_nb, ovlp_value):
+    def __init__(self, V0, V1, V2, V, Vt, domain_nb, ovlp_value, kappa):
 
        # ...
-       stiffness  = assemble_stiffness(V)
-       stiffnessc = assemble_stiffnessc(V)
+       stiffness  = assemble_stiffness(V, value = [kappa])
+       stiffnessc = assemble_stiffnessc(V, value = [kappa])
        #-- Build lift hand side of a linear system
        n_basis                    = V0.nbasis*V1.nbasis
        M                          = zeros((n_basis*2,n_basis*2))
@@ -100,11 +100,13 @@ class DDM_Helmholtz(object):
        self.ovlp_value     = ovlp_value
        self.domain_nb      = domain_nb
        self.n_basis        = V0.nbasis*V1.nbasis
+       self.kappa          = kappa
                      
     def Proj_solve(self, u, u_d):
        '''
        Projection of a solution in the other space
        '''
+       kappa               = self.kappa
        # ...
        rhs                 = StencilVector(self.V1.vector_space)
        rhs                 = assemble_Pr(self.Vt, fields = [u], knots = True, value = [self.ovlp_value], out = rhs) 
@@ -125,8 +127,8 @@ class DDM_Helmholtz(object):
        # ... TOLERANCE
        dx                  = u_L2.toarray() - u_d.toarray()
        l2_residual         = sqrt(dx.dot(self.mass.dot(dx)) )
-       print( "l2_residual=============================", l2_residual)
-       return u_L2, x_n
+       #print( "l2_residual=============================", l2_residual)
+       return u_L2, x_n, l2_residual
        
     def solve(self,  u_d = None, u_dc = None):
        '''
@@ -135,8 +137,8 @@ class DDM_Helmholtz(object):
        u                     = StencilVector(self.V.vector_space)
        v                     = StencilVector(self.V.vector_space)
        # ... assembles rhs 
-       rhs                   = assemble_rhs( self.V, fields = [u_dc])
-       rhsc                  = assemble_rhsc(self.V, fields = [u_d] )
+       rhs                   = assemble_rhs( self.V, fields = [u_dc], value = [kappa])
+       rhsc                  = assemble_rhsc(self.V, fields = [u_d], value = [kappa] )
 
        #-- Build right hand side of a linear system
        b                     = zeros(self.n_basis*2)
@@ -165,12 +167,12 @@ class DDM_Helmholtz(object):
        xc[-1,: ]            += u_dc.toarray().reshape(self.V.nbasis)[-1,:]
        v.from_array(self.V, xc)
        
-       Norm                  = assemble_norm_l2(self.V, fields=[u], value = [0])
+       Norm                  = assemble_norm_l2(self.V, fields=[u], value = [0, kappa])
        norm                  = Norm.toarray()
        l2_norm               = norm[0]
        H1_norm               = norm[1]
 
-       Norm                  = assemble_norm_l2(self.V, fields=[v], value = [1])
+       Norm                  = assemble_norm_l2(self.V, fields=[v], value = [1, kappa])
        norm                  = Norm.toarray()
        l2_normc              = norm[0]
        H1_normc              = norm[1]
@@ -178,21 +180,21 @@ class DDM_Helmholtz(object):
        return u, v, xr, xc, l2_norm, H1_norm, l2_normc, H1_normc    
     
 
-degree      = 4
+degree      = 2
 quad_degree = degree + 1
 
 # ... please take into account that : beta < alpha 
-alpha       = 0.75
-beta        = 0.25
+alpha       = 0.7
+beta        = 0.2
 overlap     = alpha - beta
 xuh_0       = []
 xuh_01      = []
-iter_max    = 60
-
+iter_max    = 100
+kappa       = 13.*2./np.sqrt(2.)
 #----------------------
 #..... Initialisation 
 #----------------------
-nelements  = 16
+nelements  = 64
 
 grids_0 = linspace(0, alpha, nelements+1)
 # create the spline space for each direction
@@ -211,8 +213,8 @@ Vt_1    = TensorSpace(V2_1, V1_0, V2_0)
 
 
 # ... INITIALIZATION
-H0      = DDM_Helmholtz(V1_0, V2_0, V2_1, V_0, Vt_0, 0, alpha)
-H1      = DDM_Helmholtz(V1_1, V2_1, V2_0, V_1, Vt_1, 1, beta)
+H0      = DDM_Helmholtz(V1_0, V2_0, V2_1, V_0, Vt_0, 0, alpha, kappa)
+H1      = DDM_Helmholtz(V1_1, V2_1, V2_0, V_1, Vt_1, 1, beta, kappa)
 
 # ... communication Dirichlet interface
 uh_d1   = StencilVector(V_0.vector_space)
@@ -233,15 +235,19 @@ print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
 
 for i in range(iter_max):
 	# ... Dirichlezt boudndary condition in x = 0.75 and 0.25
-	uh_d1, xh_d                      = H0.Proj_solve(u_1, uh_d1  )
-	uh_d1c, xh_dc                    = H0.Proj_solve(u_1c, uh_d1c)
-	uh_d0, xh                        = H1.Proj_solve(u_0, uh_d0  )
-	uh_d0c, xhc                      = H1.Proj_solve(u_0c, uh_d0c)
+	uh_d1, xh_d, l2_residual1                      = H0.Proj_solve(u_1, uh_d1  )
+	uh_d1c, xh_dc, l2_residual2                    = H0.Proj_solve(u_1c, uh_d1c)
+	uh_d0, xh, l2_residual3                        = H1.Proj_solve(u_0, uh_d0  )
+	uh_d0c, xhc, l2_residual4                      = H1.Proj_solve(u_0c, uh_d0c)
 	#...
 	u_0, u_0c, xuh, xuhc, l2_norm, H1_norm, l2_normc, H1_normc  = H0.solve( u_d= uh_d1, u_dc= uh_d1c)
 	xuh_0.append(xuh)
 	u_1, u_1c, xuh_1, xuh_1c, l2_norm1, H1_norm1, l2_norm1c, H1_norm1c  = H1.solve( u_d= uh_d0, u_dc= uh_d0c)
 	xuh_01.append(xuh_1)
+	if abs(l2_residual1+l2_residual2+l2_residual3+l2_residual4) <=1e-10:
+	        iter_max = i+1
+	        print(iter_max)
+	        break
 	l2_err = l2_norm + l2_norm1
 	H1_err = H1_norm + H1_norm1
 	print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
@@ -288,7 +294,7 @@ if True :
 	    u_01.append(pyccel_sol_field_2d((nbpts, nbpts),  xuh_01[i],   V_1.knots, V_1.degree)[0][:,50])
 	# ...
 	#solut = lambda x, t, y : sin(pi*t)*x**2*y*3*sin(4.*pi*(1.-x))*(1.-y) 
-	solut = lambda  x, y :  cos(20.*(x*cos(pi/4.) + y*sin(pi/4.)))
+	solut = lambda  x, y :  cos(10.*(x*cos(pi/4.) + y*sin(pi/4.)))
 
 	plt.figure() 
 	plt.axes().set_aspect('equal')
