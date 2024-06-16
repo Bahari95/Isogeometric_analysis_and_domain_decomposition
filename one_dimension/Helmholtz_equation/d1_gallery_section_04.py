@@ -121,17 +121,6 @@ def assemble_vector_ex01(ne, degree, spans, basis, weights, points, vector_d,  K
                             v += Kappa**2*bi_0 * u * wvol - ux * bi_x * wvol
 
                     rhs[i1+degree] += v   
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # Assembles Robin Condition
-    theta = pi/4.
-    #.. 
-    x1       = 0.
-    alpha    = Kappa*x1*cos(theta)
-    #rhs[0+degree]       += (- Kappa*cos(theta)*cos(alpha) - Kappa*cos(alpha) )
-    #.. 
-    x1       = 1.
-    alpha    = Kappa*x1*cos(theta)
-    #rhs[ne-1+2*degree] += (+ Kappa*cos(theta)*cos(alpha) - Kappa*cos(alpha) )
     # ...
 
 
@@ -189,17 +178,6 @@ def assemble_vector_ex11(ne, degree, spans, basis, weights, points, vector_d, Ka
                             v += Kappa**2 * bi_0 * u * wvol - ux * bi_x * wvol
 
                     rhs[i1+degree] += v   
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # Assembles Robin Condition
-    theta = pi/4.
-    #.. 
-    x1       = 0.
-    alpha    = Kappa*x1*cos(theta)
-    #rhs[0+degree] += (Kappa*cos(theta)*sin(alpha) + Kappa*sin(alpha) )
-    #.. 
-    x1       = 1.
-    alpha    = Kappa*x1*cos(theta)
-    #rhs[ne-1+2*degree] += (-Kappa*cos(theta)*sin(alpha) + Kappa*sin(alpha) )
     # ...
 
 #==============================================================================Assemble l2 and H1 error norm

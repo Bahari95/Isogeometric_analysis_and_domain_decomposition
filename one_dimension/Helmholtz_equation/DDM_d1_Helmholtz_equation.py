@@ -27,7 +27,6 @@ assemble_stiffness   = compile_kernel(assemble_matrix_un_ex01, arity=2)
 
 assemble_rhs         = compile_kernel(assemble_vector_ex01, arity=1)
 assemble_rhsc        = compile_kernel(assemble_vector_ex11, arity=1)
-
 assemble_norm_l2     = compile_kernel(assemble_norm_ex01, arity=1)
 print('time to import utilities of Poisson equation =', time.time()-start)
 
@@ -153,19 +152,19 @@ quad_degree = degree + 1
 
 # ... please take into account that : beta < alpha 
 alpha       = 0.7
-beta        = 0.2
+beta        = 0.1
 overlap     = alpha - beta
 xuh_0       = []
 xuh_01      = []
-iter_max    = 1
+iter_max    = 30
 
-Kappa       = 20. 
+Kappa       = 11. #2. * np.pi 
 #----------------------
 #..... Initialisation 
 #----------------------
 nelements  = 128
 
-grids_0 = linspace(0, alpha, nelements+1)
+grids_0 = linspace(0., alpha, nelements+1)
 # create the spline space for each direction
 V_0    = SplineSpace(degree=degree, nelements= nelements, grid =grids_0, nderiv = 2, quad_degree = quad_degree)
 
@@ -186,24 +185,24 @@ xuh_01.append(xuh_1)
 l2_err = l2_norm + l2_norm1
 H1_err = H1_norm + H1_norm1
 
-print('0r-----> L^2-error ={} -----> H^1-error = {}'.format(l2_norm, H1_norm))
-print('0c-----> L^2-error ={} -----> H^1-error = {}'.format(l2_normc, H1_normc))
-
-print('1r-----> L^2-error ={} -----> H^1-error = {}'.format(l2_norm1, H1_norm1))
-print('1c-----> L^2-error ={} -----> H^1-error = {}'.format(l2_norm1c, H1_norm1c))
-P = np.zeros((V_0.nbasis, 1))
+print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
+# ...
 
 plt.figure()
 for i in range(iter_max):
 	# ... computes the image of the overlape point by a new solution
+	P = np.zeros((V_0.nbasis, 1))
 	P[:,0]  = xuh_1[:]
 	a = point_on_bspline_curve(V_1.knots, P, alpha)
+	P = np.zeros((V_0.nbasis, 1))
 	P[:,0]  = xuh_1c[:]
 	b = point_on_bspline_curve(V_1.knots, P, alpha)
 	u_0, u_0c, xuh, xuhc, l2_norm, H1_norm, l2_normc, H1_normc  = H0.solve( a, b)
 	xuh_0.append(xuh)
+	P = np.zeros((V_0.nbasis, 1))
 	P[:,0]  = xuh[:]
 	a = point_on_bspline_curve(V_0.knots, P, beta)
+	P = np.zeros((V_0.nbasis, 1))
 	P[:,0]  = xuhc[:]
 	b = point_on_bspline_curve(V_0.knots, P, beta)
 	u_1, u_1c, xuh_1, xuh_1c, l2_norm1, H1_norm1, l2_norm1c, H1_norm1c  = H1.solve( a, b)
