@@ -1,6 +1,13 @@
 #  Schwarz methods for domain decomposition using Isogeoemetric Analaysis:
 
 ** Three dimension for Poisson is avialable **
+TODO:
+
+    Implement B-spline mapping
+    Handle complex geometries (single patch)
+    Extend to multipatch geometries
+
+
 ## some papers
 https://sci-hub.se/https://doi.org/10.1016/j.cma.2019.07.010
 
