@@ -35,25 +35,8 @@ https://www.sciencedirect.com/science/article/abs/pii/S0167839618300396
 
 ![PNG](https://github.com/Bahari95/Isogeometric_analysis_and_domain_decomposition/blob/main/C_r_DDM_roubin/C_1_B_spline_Harmonic_Mapping/VP_harmonic_c1_mapping.png)
 
-## Application : In this implementation of the DDM method, we compute C^r solution using Roubin in DDM
-
-### Projection
-
-![PNG](https://github.com/Bahari95/Isogeometric_analysis_and_domain_decomposition/blob/main/C_r_DDM_roubin/two_dimension/non_homogeneous_Dirichlet_boundary/Figure_1.png)
-
-### Ap. solution and Exact solution
-![PNG](https://github.com/Bahari95/Isogeometric_analysis_and_domain_decomposition/blob/main/C_r_DDM_roubin/two_dimension/non_homogeneous_Dirichlet_boundary/Poisson3D.png)
-
 ## The 1D Poisson equation using Dirichlet boundary conditions in DDM: solution evolution
 ![PNG](https://github.com/Bahari95/Isogeometric_analysis_for_domain_decomposition/blob/main/one_dimension/parallel_Schwarz_method_Dirichlet/DD_sol_evol.png)
-
-## The 2D Poisson equation using Robin boundary conditions in DDM : 
-
-### Projection : (left) solution evolution (right) solution for the last iteration
-![PNG](https://github.com/Bahari95/Isogeometric_analysis_for_domain_decomposition/blob/main/two_dimension/parallel_Schwarz_method_Robin/on_more_general_geometries/Quart_annulus.png)
-
-### (left) approximate and (right) exact solution
-![PNG](https://github.com/Bahari95/Isogeometric_analysis_for_domain_decomposition/blob/main/two_dimension/parallel_Schwarz_method_Robin/on_more_general_geometries/Quart_annulus_3D.png)
 
 ## The 2D Helmholtz equation with wave number K = 20 using Dirichlet in DDM
 
@@ -62,9 +45,3 @@ https://doi.org/10.1016/j.cma.2018.02.020
 ### (left) real solution evolution (right) solution for the last iteration
 ![PNG](https://github.com/Bahari95/Isogeometric_analysis_for_domain_decomposition_Poisson_equation/blob/main/two_dimension/parallel_Schwarz_method_Dirichlet/Helmholtz_equation/solut_evol.png)
 
-
-### (left) approximate and (right) exact solution
-![PNG](https://github.com/Bahari95/Isogeometric_analysis_for_domain_decomposition_Poisson_equation/blob/main/two_dimension/parallel_Schwarz_method_Dirichlet/Helmholtz_equation/Helmholtz_3D.png)
-
-### (left) real and (right) complex part of approximate solution
-![PNG](https://github.com/Bahari95/Isogeometric_analysis_for_domain_decomposition_Poisson_equation/blob/main/two_dimension/parallel_Schwarz_method_Dirichlet/Helmholtz_equation/real_and_comlex_part_of_the_solution_.png)
