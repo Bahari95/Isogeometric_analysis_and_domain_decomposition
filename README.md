@@ -30,11 +30,6 @@ https://www.sciencedirect.com/science/article/abs/pii/S0167839618300396
   
 ## Some Examples:
 
-## Application : In this implementation of the DDM method, we create a C^1 harmonic mapping using Roubin in DDM
-![PNG](https://github.com/Bahari95/Isogeometric_analysis_and_domain_decomposition/blob/main/C_r_DDM_roubin/C_1_B_spline_Harmonic_Mapping/C1_Harmonic_mapping.png)
-
-![PNG](https://github.com/Bahari95/Isogeometric_analysis_and_domain_decomposition/blob/main/C_r_DDM_roubin/C_1_B_spline_Harmonic_Mapping/VP_harmonic_c1_mapping.png)
-
 ## The 1D Poisson equation using Dirichlet boundary conditions in DDM: solution evolution
 ![PNG](https://github.com/Bahari95/Isogeometric_analysis_for_domain_decomposition/blob/main/one_dimension/parallel_Schwarz_method_Dirichlet/DD_sol_evol.png)
 
