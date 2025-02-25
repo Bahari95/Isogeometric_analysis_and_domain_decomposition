@@ -204,6 +204,7 @@ def assemble_vector_ex01(ne1, ne2, ne3, ne4, p1, p2, p3, p4, spans_1, spans_2,  
     #J_mat2      = zeros((k1, k2))
     #J_mat3      = zeros((k1, k2))
     # ...
+    
     lcoeffs_d   = zeros((p1+1,p2+1))
     # ... build rhs
     for ie1 in range(0, ne1):

@@ -8,12 +8,12 @@ from simplines import pyccel_sol_field_2d
 from simplines import getGeometryMap
 from simplines import prolongation_matrix
 #---In Poisson equation
-from gallery_section_04 import assemble_vector_ex01   
+from gallery_section_04 import assemble_vector_un_ex01   
 from gallery_section_04 import assemble_matrix_un_ex01 
 from gallery_section_04 import assemble_norm_ex01     
 
 assemble_stiffness2D = compile_kernel(assemble_matrix_un_ex01, arity=2)
-assemble_rhs         = compile_kernel(assemble_vector_ex01, arity=1)
+assemble_rhs         = compile_kernel(assemble_vector_un_ex01, arity=1)
 assemble_norm_l2     = compile_kernel(assemble_norm_ex01, arity=1)
 
 #from matplotlib.pyplot import plot, show
@@ -38,10 +38,13 @@ import time
 #.......Poisson ALGORITHM
 #==============================================================================
 class DDM_poisson(object):
-   def __init__(self, V1, V2, V, V_TOT,  u11_mpH, u12_mpH, S_DDM, domain_nb, ovlp_value):
+   def __init__(self, V1, V2, V, V_TOT,  u11_mpH, u12_mpH,  S_DDM, domain_nb, ovlp_value):
+
+  
 
        # ++++
-       stiffness           = assemble_stiffness2D(V, value = [domain_nb, S_DDM, ovlp_value])
+       stiffness           = assemble_stiffness2D(V, fields = [u11_mpH, u12_mpH], value = [domain_nb, S_DDM, ovlp_value] )
+       print(stiffness)
        if domain_nb == 0 :
            stiffness       = apply_dirichlet(V, stiffness, dirichlet = [[True, False],[True, True]])
        else :
@@ -54,8 +57,8 @@ class DDM_poisson(object):
        self.S_DDM          = S_DDM
        self.ovlp_value     = ovlp_value
        self.sp             = [V, V_TOT]
-       self.u11_mpH		   = self.u11_mpH 
-       self.u12_mpH		   = self.u12_mpH
+       self.u11_mpH        = u11_mpH 
+       self.u12_mpH        = u12_mpH
 
    def solve(self, u_d):
           
@@ -65,7 +68,7 @@ class DDM_poisson(object):
        # ++++
        #--Assembles a right hand side of Poisson equation
        rhs                 = StencilVector(V.vector_space)
-       rhs                 = assemble_rhs( V_TOT, fields = [u_d], knots = True, value = [self.ovlp_value, self.S_DDM, self.domain_nb], out = rhs )
+       rhs                 = assemble_rhs( V_TOT, fields = [self.u11_mpH, self.u12_mpH, u_d], knots = True, value = [self.domain_nb, self.S_DDM, self.ovlp_value], out = rhs )
 
        if self.domain_nb == 0 :
           rhs              = apply_dirichlet(V, rhs, dirichlet = [[True, False],[True, True]])
@@ -87,7 +90,7 @@ class DDM_poisson(object):
 
 degree      = 2
 quad_degree = degree + 1
-nelements   = 32 # please take it as factor of 16 
+nelements   = 128# please take it as factor of 16 
 
 #.. Parameterisation of the domain and refinement
 
@@ -103,13 +106,14 @@ nelements   = 32 # please take it as factor of 16
 # create the spline space for each direction
 VH1       = SplineSpace(degree=degree, nelements=16)
 VH1       = TensorSpace(VH1, VH1)# before refinement
-Vh1       = SplineSpace(degree=degree, nelements=16)
+
+Vh1       = SplineSpace(degree=degree, nelements=nelements)
 Vh1       = TensorSpace(Vh1, Vh1)# after refinement
 #----------------------------------------
 #..... Parameterization from 16*16 elements
 #----------------------------------------
 # ... Circle :  patch 1
-geometry  = '../cad/figs/circle1.xml'
+geometry  = '../parallel_Schwarz_method_Robin_2D/circle1.xml'
 print('#---IN-UNIFORM--MESH-Poisson equation patch 1', geometry)
 
 # ... Assembling mapping
@@ -119,7 +123,7 @@ ymp1      = zeros(VH1.nbasis)
 
 xmp1[:,:], ymp1[:,:] =  mp1.coefs()
 
-geometry = '../cad/figs/circle2.xml'
+geometry = '../parallel_Schwarz_method_Robin_2D/circle2.xml'
 print('#---IN-UNIFORM--MESH-Poisson equation patch 2', geometry)
 
 # ... Assembling mapping
@@ -135,13 +139,78 @@ ymp2[0,:] = ymp1[-1,:]
 #ymp2[:,1] - ymp2[:,0] = ymp[:,-1]
 #... Prolongation by knot insertion
 M_mp      = prolongation_matrix(VH1, Vh1)
-xmp1      = (M_mp.dot(xmp1.reshape(Vh1.nbasis[0]*Vh1.nbasis[1]))).reshape(Vh1.nbasis)
-ymp1      = (M_mp.dot(ymp1.reshape(Vh1.nbasis[0]*Vh1.nbasis[1]))).reshape(Vh1.nbasis)
-xmp2      = (M_mp.dot(xmp2.reshape(Vh1.nbasis[0]*Vh1.nbasis[1]))).reshape(Vh1.nbasis)
-ymp2      = (M_mp.dot(ymp2.reshape(Vh1.nbasis[0]*Vh1.nbasis[1]))).reshape(Vh1.nbasis)
+
+xmp1      = (M_mp.dot(xmp1.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nbasis)
+ymp1      = (M_mp.dot(ymp1.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nbasis)
+xmp2      = (M_mp.dot(xmp2.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nbasis)
+ymp2      = (M_mp.dot(ymp2.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nbasis)
+
+'''
+fig =plt.figure() 
+for i in range(Vh1.nbasis[1]):
+   phidx = xmp1[:,i]
+   phidy = ymp1[:,i]
+
+   plt.plot(phidx, phidy, '-b', linewidth = .3)
+for i in range(Vh1.nbasis[0]):
+   phidx = xmp1[i,:]
+   phidy = ymp1[i,:]
+
+   plt.plot(phidx, phidy, '-b', linewidth = .3)
+for i in range(Vh1.nbasis[1]):
+   phidx = xmp2[:,i]
+   phidy = ymp2[:,i]
+
+   plt.plot(phidx, phidy, '-b', linewidth = .3)
+for i in range(Vh1.nbasis[0]):
+   phidx = xmp2[i,:]
+   phidy = ymp2[i,:]
+
+   plt.plot(phidx, phidy, '-b', linewidth = .3)
+   
+#.. Plot the surface in the first patch 1
+phidx = xmp1[:,0]
+phidy = ymp1[:,0]
+plt.plot(phidx, phidy, 'm', linewidth=2., label = 'patch 2 $Im([0,1]^2_{y=0})$')
+# ...
+phidx = xmp1[:,Vh1.nbasis[1]-1]
+phidy = ymp1[:,Vh1.nbasis[1]-1]
+plt.plot(phidx, phidy, 'b', linewidth=2. ,label = 'patch 2 $Im([0,1]^2_{y=1})$')
+#''
+phidx = xmp1[0,:]
+phidy = ymp1[0,:]
+plt.plot(phidx, phidy, 'r',  linewidth=2., label = 'patch 2 $Im([0,1]^2_{x=0})$')
+# ...
+phidx = xmp1[Vh1.nbasis[1]-1,:]
+phidy = ymp1[Vh1.nbasis[1]-1,:]
+plt.plot(phidx, phidy, 'g', linewidth= 2., label = 'patch 2 $Im([0,1]^2_{x=1}$)')
+
+#.. Plot the surface in the second patch 2
+
+phidx = xmp2[:,0]
+phidy = ymp2[:,0]
+plt.plot(phidx, phidy, 'm', linewidth=2., label = 'patch 1 $Im([0,1]^2_{y=0})$')
+# ...
+phidx = xmp2[:,Vh1.nbasis[1]-1]
+phidy = ymp2[:,Vh1.nbasis[1]-1]
+plt.plot(phidx, phidy, 'b', linewidth=2. ,label = 'patch 1 $Im([0,1]^2_{y=1})$')
+#''
+phidx = xmp2[0,:]
+phidy = ymp2[0,:]
+plt.plot(phidx, phidy, 'r',  linewidth=2., label = 'patch 1 $Im([0,1]^2_{x=0})$')
+# ...
+phidx = xmp2[Vh1.nbasis[1]-1,:]
+phidy = ymp2[Vh1.nbasis[1]-1,:]
+plt.plot(phidx, phidy, 'g', linewidth= 2., label = 'patch 1 $Im([0,1]^2_{x=1}$)')
+
+plt.legend()
+plt.scatter(xmp1[Vh1.nbasis[1]-1,:],ymp1[Vh1.nbasis[1]-1,:], color= 'black', linewidths=3.)
+#plt.scatter(xmp1[Vh1.nbasis[1]-1,Vh1.nbasis[1]-1],ymp1[Vh1.nbasis[1]-1,Vh1.nbasis[1]-1],  color= 'black', linewidths=3.)
+plt.show()
+'''
+
 #...End of parameterisation
 #--------------------------------------------------------------
-
 # ... please take into account that : beta < alpha 
 alpha       = 0.5 # fixed by the geometry parameterization
 beta        = 0.5 # fixed by the geometry parameterization
@@ -180,8 +249,12 @@ v11_mpH.from_array(V_1, xmp2)
 v12_mpH.from_array(V_1, ymp2)
 
 # --- Initialization
-P0      = DDM_poisson(V1_0, V2_0, V_0, Vt_0, u11_mpH, u12_mpH, S_DDM, 0, alpha )
-P1      = DDM_poisson(V1_1, V2_1, V_1, Vt_1, v11_mpH, v12_mpH, S_DDM, 1, beta  )
+domain_nb = 0
+
+P0      = DDM_poisson(V1_0, V2_0, V_0, Vt_0, u11_mpH, u12_mpH,  S_DDM, domain_nb, alpha )
+
+domain_nb = 1
+P1      = DDM_poisson(V1_1, V2_1, V_1, Vt_1, v11_mpH, v12_mpH, S_DDM, domain_nb, beta  )
 
 # ... communication Dirichlet interface
 u_00    = StencilVector(V_0.vector_space)
@@ -211,7 +284,7 @@ for i in range(iter_max):
 	l2_err = l2_norm + l2_norm1
 	H1_err = H1_norm + H1_norm1
 	print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
-
+'''
 #---Compute a solution
 nbpts = 100
 # # ........................................................
@@ -292,3 +365,4 @@ if True :
 	fig.colorbar(surf, shrink=0.5, aspect=25)
 	plt.savefig('Poisson3D.png')
 	plt.show()
+'''
