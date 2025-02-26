@@ -7,6 +7,7 @@ from simplines import StencilVector
 from simplines import pyccel_sol_field_2d
 from simplines import getGeometryMap
 from simplines import prolongation_matrix
+from simplines import least_square_Bspline
 #---In Poisson equation
 from gallery_section_04 import assemble_vector_un_ex01   
 from gallery_section_04 import assemble_matrix_un_ex01 
@@ -38,7 +39,7 @@ import time
 #.......Poisson ALGORITHM
 #==============================================================================
 class DDM_poisson(object):
-   def __init__(self, V1, V2, V, V_TOT,  u11_mpH, u12_mpH,  S_DDM, domain_nb, ovlp_value):
+   def __init__(self, V, V_TOT,  u11_mpH, u12_mpH,  v11_mpH, v12_mpH, u_d, S_DDM, domain_nb, ovlp_value):
 
   
 
@@ -59,8 +60,11 @@ class DDM_poisson(object):
        self.sp             = [V, V_TOT]
        self.u11_mpH        = u11_mpH 
        self.u12_mpH        = u12_mpH
-
-   def solve(self, u_d):
+       self.v11_mpH        = v11_mpH 
+       self.v12_mpH        = v12_mpH
+       self.u_d			   = u_d
+       self.x_d			   = u_d.toarray().reshape(V.nbasis)
+   def solve(self, u_np):
           
        V, V_TOT            = self.sp[:]
        # ...
@@ -68,7 +72,7 @@ class DDM_poisson(object):
        # ++++
        #--Assembles a right hand side of Poisson equation
        rhs                 = StencilVector(V.vector_space)
-       rhs                 = assemble_rhs( V_TOT, fields = [self.u11_mpH, self.u12_mpH, u_d], knots = True, value = [self.domain_nb, self.S_DDM, self.ovlp_value], out = rhs )
+       rhs                 = assemble_rhs( V_TOT, fields = [self.u11_mpH, self.u12_mpH, self.u_d, self.v11_mpH, self.v12_mpH, u_np], knots = True, value = [self.domain_nb, self.S_DDM, self.ovlp_value], out = rhs )
 
        if self.domain_nb == 0 :
           rhs              = apply_dirichlet(V, rhs, dirichlet = [[True, False],[True, True]])
@@ -76,9 +80,9 @@ class DDM_poisson(object):
           rhs              = apply_dirichlet(V, rhs, dirichlet = [[False, True],[True, True]])
        b                   = rhs.toarray()
        # ...
-       x                   = self.lu.solve(b)       
+       x                   = self.lu.solve(b)
        # ...
-       x                   = x.reshape(V.nbasis)
+       x                   = x.reshape(V.nbasis) + self.x_d
        #...
        u.from_array(V, x)
        # ...
@@ -219,6 +223,8 @@ xuh_0       = []
 xuh_01      = []
 iter_max    = 100
 S_DDM       = 1./alpha**2 #alpha/(nelements+1)
+#.. test 0
+u_exact   = lambda x, y : sin(2.*pi*x)*sin(2.*pi*y)
 #--------------------------
 #..... Initialisation
 #--------------------------
@@ -251,10 +257,30 @@ v12_mpH.from_array(V_1, ymp2)
 # --- Initialization
 domain_nb = 0
 
-P0      = DDM_poisson(V1_0, V2_0, V_0, Vt_0, u11_mpH, u12_mpH,  S_DDM, domain_nb, alpha )
+n_dir   = V1_0.nbasis + V2_0.nbasis+100
+sX      = pyccel_sol_field_2d((n_dir,n_dir),  xmp1 , V_0.knots, V_0.degree)[0]
+sY      = pyccel_sol_field_2d((n_dir,n_dir),  ymp1 , V_0.knots, V_0.degree)[0]
+u_d        = StencilVector(V_0.vector_space)
+x_d        = np.zeros(V_0.nbasis)
+x_d[0, : ] = least_square_Bspline(V2_0.degree, V2_0.knots, u_exact(sX[0, :], sY[ 0,:]), m= n_dir)
+#x_d[-1, :] = least_square_Bspline(V2_0.degree, V2_0.knots, u_exact(sX[-1,:], sY[-1,:]), m= n_dir)
+x_d[:,0]   = least_square_Bspline(V1_0.degree, V1_0.knots, u_exact(sX[:, 0], sY[:, 0]), m= n_dir)
+x_d[:, -1] = least_square_Bspline(V1_0.degree, V1_0.knots, u_exact(sX[:,-1], sY[:,-1]), m= n_dir)
+u_d.from_array(V_0, x_d)
+
+P0      = DDM_poisson(V_0, Vt_0, u11_mpH, u12_mpH, v11_mpH, v12_mpH, u_d, S_DDM, domain_nb, alpha )
 
 domain_nb = 1
-P1      = DDM_poisson(V1_1, V2_1, V_1, Vt_1, v11_mpH, v12_mpH, S_DDM, domain_nb, beta  )
+sX      = pyccel_sol_field_2d((n_dir,n_dir),  xmp2 , V_1.knots, V_1.degree)[0]
+sY      = pyccel_sol_field_2d((n_dir,n_dir),  ymp2 , V_1.knots, V_1.degree)[0]
+u_d        = StencilVector(V_1.vector_space)
+x_d        = np.zeros(V_1.nbasis)
+#x_d[0, : ] = least_square_Bspline(V2_1.degree, V2_1.knots, u_exact(sX[0, :], sY[ 0,:]), m= n_dir)
+x_d[-1, :] = least_square_Bspline(V2_1.degree, V2_1.knots, u_exact(sX[-1,:], sY[-1,:]), m= n_dir)
+x_d[:,0]   = least_square_Bspline(V1_1.degree, V1_1.knots, u_exact(sX[:, 0], sY[:, 0]), m= n_dir)
+x_d[:, -1] = least_square_Bspline(V1_1.degree, V1_1.knots, u_exact(sX[:,-1], sY[:,-1]), m= n_dir)
+u_d.from_array(V_1, x_d)
+P1      = DDM_poisson(V_1, Vt_1, v11_mpH, v12_mpH, u11_mpH, u12_mpH, u_d, S_DDM, domain_nb, beta  )
 
 # ... communication Dirichlet interface
 u_00    = StencilVector(V_0.vector_space)
@@ -278,9 +304,9 @@ for i in range(iter_max):
 	xuh_01.append(xuh_1)
 	u_00   = u_0
 	if abs(l2_err - l2_norm - l2_norm1) <=1e-10:
-	        iter_max = i+1
-	        print(iter_max)
-	        break
+		iter_max = i+1
+		print(iter_max)
+		break
 	l2_err = l2_norm + l2_norm1
 	H1_err = H1_norm + H1_norm1
 	print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
