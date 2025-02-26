@@ -12,9 +12,10 @@ venv/
 # Ignore system files
 .DS_Store
 Thumbs.db
-[__pycache__]
-[__epyccel__]
-[figs]
+**/__pycache__
+**/__epyccel__
+**/figs
+
 # Ignore other files
 *.log
 *.tmp
