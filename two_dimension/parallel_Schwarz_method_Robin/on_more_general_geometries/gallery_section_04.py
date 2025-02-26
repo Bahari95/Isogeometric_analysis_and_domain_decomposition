@@ -338,6 +338,8 @@ def assemble_vector_ex01(ne1, ne2, ne3, ne4, p1, p2, p3, p4, spans_1, spans_2,  
             ders[1,:] = ders[1,:] * r
             basis3[0,:] = ders[0,:]
             basis3[1,:] = ders[1,:]
+    # ...
+    span_3    = span
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Assembles Neumann Condition
     if domain_nb == 0 :
@@ -353,27 +355,6 @@ def assemble_vector_ex01(ne1, ne2, ne3, ne4, p1, p2, p3, p4, spans_1, spans_2,  
            i_span_2 = spans_2[ie2]
            
            for g2 in range(0, k2):
-                    #... We compute firstly the span in new adapted points                             
-                    #...                    
-                    xq        = ovlp_value
-                    degree    = p3
-                    low       = degree
-                    high      = len(knots_3)-1-degree
-                    # Check if point is exactly on left/right boundary, or outside domain
-                    if xq <= knots_3[low ]: 
-                         span = low
-                    if xq >= knots_3[high]: 
-                         span = high-1
-                    else :
-                      # Perform binary search
-                      span = (low+high)//2
-                      while xq < knots_3[span] or xq >= knots_3[span+1]:
-                         if xq < knots_3[span]:
-                             high = span
-                         else:
-                             low  = span
-                         span = (low+high)//2
-                    span_3    = span 
                     # ...
                     lcoeffs_d[:, :] = vector_d[span_3 : span_3+p3+1, i_span_2 : i_span_2+p4+1]
                     # ...

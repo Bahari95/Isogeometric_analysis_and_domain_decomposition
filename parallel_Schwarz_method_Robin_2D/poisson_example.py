@@ -45,7 +45,6 @@ class DDM_poisson(object):
 
        # ++++
        stiffness           = assemble_stiffness2D(V, fields = [u11_mpH, u12_mpH], value = [domain_nb, S_DDM, ovlp_value] )
-       print(stiffness)
        if domain_nb == 0 :
            stiffness       = apply_dirichlet(V, stiffness, dirichlet = [[True, False],[True, True]])
        else :
@@ -86,7 +85,7 @@ class DDM_poisson(object):
        #...
        u.from_array(V, x)
        # ...
-       Norm                = assemble_norm_l2(V, fields=[u]) 
+       Norm                = assemble_norm_l2(V, fields=[self.u11_mpH, self.u12_mpH, u]) 
        norm                = Norm.toarray()
        l2_norm             = norm[0]
        H1_norm             = norm[1]       
@@ -94,7 +93,7 @@ class DDM_poisson(object):
 
 degree      = 2
 quad_degree = degree + 1
-nelements   = 128# please take it as factor of 16 
+nelements   = 128 # please take it as factor of 16 
 
 #.. Parameterisation of the domain and refinement
 
@@ -118,6 +117,7 @@ Vh1       = TensorSpace(Vh1, Vh1)# after refinement
 #----------------------------------------
 # ... Circle :  patch 1
 geometry  = '../parallel_Schwarz_method_Robin_2D/circle1.xml'
+
 print('#---IN-UNIFORM--MESH-Poisson equation patch 1', geometry)
 
 # ... Assembling mapping
@@ -139,8 +139,8 @@ xmp2[:,:], ymp2[:,:] =  mp2.coefs()
 xmp2[0,:] = xmp1[-1,:] 
 ymp2[0,:] = ymp1[-1,:]
 # ... C1 continuity garad(F1 = F2)  = garad(F2)  interface
-#xmp2[:,1] - xmp2[:,0] = xmp[:,-1]
-#ymp2[:,1] - ymp2[:,0] = ymp[:,-1]
+xmp2[1,:] = 2.*xmp1[-1,:] - xmp1[-2,:]
+ymp2[1,:] = 2.*ymp1[-1,:] - ymp1[-2,:] 
 #... Prolongation by knot insertion
 M_mp      = prolongation_matrix(VH1, Vh1)
 
@@ -149,7 +149,7 @@ ymp1      = (M_mp.dot(ymp1.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nb
 xmp2      = (M_mp.dot(xmp2.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nbasis)
 ymp2      = (M_mp.dot(ymp2.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nbasis)
 
-'''
+
 fig =plt.figure() 
 for i in range(Vh1.nbasis[1]):
    phidx = xmp1[:,i]
@@ -211,7 +211,7 @@ plt.legend()
 plt.scatter(xmp1[Vh1.nbasis[1]-1,:],ymp1[Vh1.nbasis[1]-1,:], color= 'black', linewidths=3.)
 #plt.scatter(xmp1[Vh1.nbasis[1]-1,Vh1.nbasis[1]-1],ymp1[Vh1.nbasis[1]-1,Vh1.nbasis[1]-1],  color= 'black', linewidths=3.)
 plt.show()
-'''
+#--------------------------------------------------------------
 
 #...End of parameterisation
 #--------------------------------------------------------------
@@ -254,12 +254,12 @@ v12_mpH        = StencilVector(V_1.vector_space)
 v11_mpH.from_array(V_1, xmp2)
 v12_mpH.from_array(V_1, ymp2)
 
-# --- Initialization
+# --- Initialization domain in left
 domain_nb = 0
 
-n_dir   = V1_0.nbasis + V2_0.nbasis+100
-sX      = pyccel_sol_field_2d((n_dir,n_dir),  xmp1 , V_0.knots, V_0.degree)[0]
-sY      = pyccel_sol_field_2d((n_dir,n_dir),  ymp1 , V_0.knots, V_0.degree)[0]
+n_dir      = V1_0.nbasis + V2_0.nbasis+100
+sX         = pyccel_sol_field_2d((n_dir,n_dir),  xmp1 , V_0.knots, V_0.degree)[0]
+sY         = pyccel_sol_field_2d((n_dir,n_dir),  ymp1 , V_0.knots, V_0.degree)[0]
 u_d        = StencilVector(V_0.vector_space)
 x_d        = np.zeros(V_0.nbasis)
 x_d[0, : ] = least_square_Bspline(V2_0.degree, V2_0.knots, u_exact(sX[0, :], sY[ 0,:]), m= n_dir)
@@ -270,9 +270,10 @@ u_d.from_array(V_0, x_d)
 
 P0      = DDM_poisson(V_0, Vt_0, u11_mpH, u12_mpH, v11_mpH, v12_mpH, u_d, S_DDM, domain_nb, alpha )
 
+# --- Initialization domain in right
 domain_nb = 1
-sX      = pyccel_sol_field_2d((n_dir,n_dir),  xmp2 , V_1.knots, V_1.degree)[0]
-sY      = pyccel_sol_field_2d((n_dir,n_dir),  ymp2 , V_1.knots, V_1.degree)[0]
+sX         = pyccel_sol_field_2d((n_dir,n_dir),  xmp2 , V_1.knots, V_1.degree)[0]
+sY         = pyccel_sol_field_2d((n_dir,n_dir),  ymp2 , V_1.knots, V_1.degree)[0]
 u_d        = StencilVector(V_1.vector_space)
 x_d        = np.zeros(V_1.nbasis)
 #x_d[0, : ] = least_square_Bspline(V2_1.degree, V2_1.knots, u_exact(sX[0, :], sY[ 0,:]), m= n_dir)
@@ -282,7 +283,7 @@ x_d[:, -1] = least_square_Bspline(V1_1.degree, V1_1.knots, u_exact(sX[:,-1], sY[
 u_d.from_array(V_1, x_d)
 P1      = DDM_poisson(V_1, Vt_1, v11_mpH, v12_mpH, u11_mpH, u12_mpH, u_d, S_DDM, domain_nb, beta  )
 
-# ... communication Dirichlet interface
+# ... communication Solution interface
 u_00    = StencilVector(V_0.vector_space)
 u_1     = StencilVector(V_1.vector_space)
 
@@ -299,8 +300,10 @@ print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
 for i in range(iter_max):
 	#...
 	u_0, xuh, l2_norm, H1_norm     = P0.solve(u_1)
+	print('.',i)
 	xuh_0.append(xuh)
 	u_1, xuh_1, l2_norm1, H1_norm1 = P1.solve(u_00)
+	print('.',i)
 	xuh_01.append(xuh_1)
 	u_00   = u_0
 	if abs(l2_err - l2_norm - l2_norm1) <=1e-10:

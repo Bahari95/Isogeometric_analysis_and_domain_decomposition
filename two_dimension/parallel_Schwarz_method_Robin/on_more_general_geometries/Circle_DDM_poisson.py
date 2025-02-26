@@ -88,8 +88,8 @@ quad_degree = degree + 1
 nelements   = 32
 
 # ... please take into account that : beta < alpha 
-alpha       = 0.75
-beta        = 0.35
+alpha       = 0.5
+beta        = 0.5
 overlap     = alpha - beta
 xuh_0       = []
 xuh_01      = []
