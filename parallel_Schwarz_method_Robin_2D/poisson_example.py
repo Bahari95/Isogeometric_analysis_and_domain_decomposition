@@ -149,7 +149,8 @@ ymp1      = (M_mp.dot(ymp1.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nb
 xmp2      = (M_mp.dot(xmp2.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nbasis)
 ymp2      = (M_mp.dot(ymp2.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nbasis)
 
-
+#-------------++++++++++++++++-------------------------------------------------
+'''
 fig =plt.figure() 
 for i in range(Vh1.nbasis[1]):
    phidx = xmp1[:,i]
@@ -211,6 +212,7 @@ plt.legend()
 plt.scatter(xmp1[Vh1.nbasis[1]-1,:],ymp1[Vh1.nbasis[1]-1,:], color= 'black', linewidths=3.)
 #plt.scatter(xmp1[Vh1.nbasis[1]-1,Vh1.nbasis[1]-1],ymp1[Vh1.nbasis[1]-1,Vh1.nbasis[1]-1],  color= 'black', linewidths=3.)
 plt.show()
+'''
 #--------------------------------------------------------------
 
 #...End of parameterisation
@@ -293,8 +295,8 @@ u_00 = u_0
 xuh_0.append(xuh)
 u_1, xuh_1, l2_norm1, H1_norm1   = P1.solve(u_0)
 xuh_01.append(xuh_1)
-l2_err = l2_norm + l2_norm1
-H1_err = H1_norm + H1_norm1
+l2_err = sqrt(l2_norm**2 + l2_norm1**2)
+H1_err = sqrt(H1_norm**2 + H1_norm1**2)
 print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
 
 for i in range(iter_max):
@@ -313,85 +315,77 @@ for i in range(iter_max):
 	l2_err = l2_norm + l2_norm1
 	H1_err = H1_norm + H1_norm1
 	print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
-'''
+
 #---Compute a solution
 nbpts = 100
 # # ........................................................
 # ....................For a plot
 # #.........................................................
 if True :
+	# --- First Subdomain ---
 	#---Compute a solution
-	u, ux, uy, sX, sY               = pyccel_sol_field_2d((nbpts, nbpts),  xuh,   V_0.knots, V_0.degree)
+	u, ux, uy, X, Y               = pyccel_sol_field_2d((nbpts, nbpts),  xuh,   V_0.knots, V_0.degree)
 	# ...
-	X = (2.0*sX-1.0) * sqrt(1.-0.5*(2.0*sY-1.0)**2)
-	Y = (2.0*sY-1.0) * sqrt(1.-0.5*(2.0*sX-1.0)**2)
-	# ...
-	u_1, ux_1, uy_1, sX_1, sY_1     = pyccel_sol_field_2d((nbpts, nbpts),  xuh_1,   V_1.knots, V_1.degree)
-	# ...
-	X_1 = (2.0*sX_1-1.0) * sqrt(1.-0.5*(2.0*sY_1-1.0)**2)
-	Y_1 = (2.0*sY_1-1.0) * sqrt(1.-0.5*(2.0*sX_1-1.0)**2)
+	u_1, ux_1, uy_1, X_1, Y_1     = pyccel_sol_field_2d((nbpts, nbpts),  xuh_1,   V_1.knots, V_1.degree)
 	u_0  = []
 	u_01 = []
 	for i in range(iter_max):
 	    u_0.append(pyccel_sol_field_2d((nbpts, nbpts),  xuh_0[i],   V_0.knots, V_0.degree)[0][:,50])
 	    u_01.append(pyccel_sol_field_2d((nbpts, nbpts),  xuh_01[i],   V_1.knots, V_1.degree)[0][:,50])
-	# ...
-	#solut = lambda  x, y : exp(-500*(x**2 + y**2 - 0.2)**2)
-	solut = lambda  x, y : 1.-x**2-y**2
-
 	plt.figure() 
 	plt.axes().set_aspect('equal')
 	plt.subplot(121)
 	for i in range(iter_max-1):
 	     plt.plot(X[:,50], u_0[i], '-k', linewidth = 1.)
-	     plt.plot(X_1[:,50], u_01[i], '-k', linewidth = 1.)
-	plt.plot(X_1[:,50], u_01[i+1], '-k', linewidth = 1., label='$\mathbf{Un_1-iter(i)}$')
+	     plt.plot(X_1[:,50], u_01[i], '-k', linewidth = 1.) 
 	plt.plot(X[:,50], u_0[i+1], '-k', linewidth = 1., label='$\mathbf{Un_0-iter(i)}$')
-	plt.grid(True)
+	plt.plot(X_1[:,50], u_01[i+1], '-k', linewidth = 1., label='$\mathbf{Un_1-iter(i)}$')
 	plt.legend()
+	plt.grid(True)  
 	plt.subplot(122)
 	plt.plot(X[:,50], u[:,50],  '--or', label = '$\mathbf{Un_0-iter-max}$' )
 	plt.plot(X_1[:,50], u_1[:,50],  '--om', label = '$\mathbf{Un_1-iter-max}$')
-	plt.grid(True)
-	plt.legend()
-	#plt.savefig('figs/Pu_{}.png'.format(0))
-	plt.show()
-	# set up a figure twice as wide as it is tall
-	fig = plt.figure(figsize=plt.figaspect(0.5))
-	#===============
-	# First subplot
-	# set up the axes for the first plot
-	ax = fig.add_subplot(1, 2, 1, projection='3d')
-	# plot a 3D surface like in the example mplot3d/surface3d_demo
-	surf0 = ax.plot_surface(X[:,:], Y[:,:], u[:,:], rstride=1, cstride=1, cmap=cm.coolwarm,
-		               linewidth=0, antialiased=False)
-	surf0 = ax.plot_surface(X_1[:,:], Y_1[:,:], u_1[:,:], rstride=1, cstride=1, cmap='viridis',
-		               linewidth=0, antialiased=False)
-	ax.set_xlim(-1.0, 1.0)
-	ax.set_ylim(-1.0, 1.0)
-	ax.zaxis.set_major_locator(LinearLocator(10))
-	ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-	#ax.set_title('Approximate solution in uniform mesh')
-	ax.set_xlabel('X',  fontweight ='bold')
-	ax.set_ylabel('Y',  fontweight ='bold')
-	# Add a color bar which maps values to colors.
-	fig.colorbar(surf0, shrink=0.5, aspect=25)
 
-	#===============
-	# Second subplot
-	ax = fig.add_subplot(1, 2, 2, projection='3d')
-	surf = ax.plot_surface(X_1[:,:], Y_1[:,:], solut(X_1[:,:], Y_1[:,:]), cmap=cm.coolwarm,
-		               linewidth=0, antialiased=False)
-	surf = ax.plot_surface(X[:,:], Y[:,:], solut(X[:,:], Y[:,:]), cmap='viridis',
-		               linewidth=0, antialiased=False)
-	ax.set_xlim(-1.0, 1.0)
-	ax.set_ylim(-1.0, 1.0)
-	ax.zaxis.set_major_locator(LinearLocator(10))
-	ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-	#ax.set_title('Approximate Solution in adaptive meshes')
-	ax.set_xlabel('F1',  fontweight ='bold')
-	ax.set_ylabel('F2',  fontweight ='bold')
-	fig.colorbar(surf, shrink=0.5, aspect=25)
-	plt.savefig('Poisson3D.png')
+	plt.legend()
+	plt.grid(True)  
+	plt.savefig('behvoir_between_two_patches.png')
+
+	      
+	u1, ux, uy, X, Y = pyccel_sol_field_2d((nbpts, nbpts), xuh, V_0.knots, V_0.degree)
+	F1_1 = pyccel_sol_field_2d((nbpts, nbpts), xmp1, V_0.knots, V_0.degree)[0]
+	F2_1 = pyccel_sol_field_2d((nbpts, nbpts), ymp1, V_0.knots, V_0.degree)[0]
+
+	# --- Second Subdomain ---
+	u2, ux, uy, X, Y = pyccel_sol_field_2d((nbpts, nbpts), xuh_1, V_1.knots, V_1.degree)
+	F1_2 = pyccel_sol_field_2d((nbpts, nbpts), xmp2, V_1.knots, V_1.degree)[0]
+	F2_2 = pyccel_sol_field_2d((nbpts, nbpts), ymp2, V_1.knots, V_1.degree)[0]
+
+	# --- Compute Global Color Levels ---
+	u_min = min(np.min(u1), np.min(u2))
+	u_max = max(np.max(u1), np.max(u2))
+	levels = np.linspace(u_min, u_max, 100)  # Uniform levels for both plots
+
+	# --- Create Figure ---
+	fig, axes = plt.subplots(figsize=(8, 6))
+
+	# --- Contour Plot for First Subdomain ---
+	im1 = axes.contourf(F1_1, F2_1, u1, levels, cmap='jet')
+
+	# --- Contour Plot for Second Subdomain ---
+	im2 = axes.contourf(F1_2, F2_2, u2, levels, cmap='jet')
+
+	# --- Colorbar ---
+	divider = make_axes_locatable(axes)
+	cax = divider.append_axes("right", size="5%", pad=0.05, aspect=40)
+	cbar = plt.colorbar(im2, cax=cax)
+	cbar.ax.tick_params(labelsize=15)
+	cbar.ax.yaxis.label.set_fontweight('bold')
+
+	# --- Formatting ---
+	axes.set_title("Solution the in whole domain ", fontweight='bold')
+	for label in axes.get_xticklabels() + axes.get_yticklabels():
+	    label.set_fontweight('bold')
+
+	fig.tight_layout()
+	plt.savefig('2patch.png')
 	plt.show()
-'''
