@@ -10,7 +10,9 @@ TODO:
 
 ## some papers
 https://sci-hub.se/https://doi.org/10.1016/j.cma.2019.07.010
+
 https://arxiv.org/pdf/1502.03756
+
 https://sci-hub.se/https://doi.org/10.1016/bs.hna.2020.09.002
 
 https://www.sciencedirect.com/science/article/abs/pii/S0167839618300396
