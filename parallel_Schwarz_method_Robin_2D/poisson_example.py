@@ -116,9 +116,18 @@ Vh1       = TensorSpace(Vh1, Vh1)# after refinement
 #..... Parameterization from 16*16 elements
 #----------------------------------------
 # ... Circle :  patch 1
-geometry  = '../parallel_Schwarz_method_Robin_2D/circle1.xml'
+
+
+#geometry  = '../parallel_Schwarz_method_Robin_2D/annuls1.xml'
 #geometry = '../parallel_Schwarz_method_Robin_2D/circle_ove1.xml'
+
+
+geometry  = '../parallel_Schwarz_method_Robin_2D/Annalus1.xml'
 print('#---IN-UNIFORM--MESH-Poisson equation patch 1', geometry)
+
+
+#Annuls : patch 1
+
 
 # ... Assembling mapping
 mp1       = getGeometryMap(geometry,0)
@@ -127,9 +136,12 @@ ymp1      = zeros(VH1.nbasis)
 
 xmp1[:,:], ymp1[:,:] =  mp1.coefs()
 
-geometry = '../parallel_Schwarz_method_Robin_2D/circle2.xml'
+#geometry = '../parallel_Schwarz_method_Robin_2D/circle2.xml'
 #geometry = '../parallel_Schwarz_method_Robin_2D/circle_ove2.xml'
+
+geometry = '../parallel_Schwarz_method_Robin_2D/Annalus2.xml'
 print('#---IN-UNIFORM--MESH-Poisson equation patch 2', geometry)
+
 
 # ... Assembling mapping
 mp2             = getGeometryMap(geometry,0) # second part
@@ -181,7 +193,38 @@ phidy = ymp1[Vh1.nbasis[1]-1,:]
 plt.plot(phidx, phidy, 'g', linewidth= 2., label = 'patch 2 $Im([0,1]^2_{x=1}$)')
 
 
-   
+
+'''
+num_points = 100
+
+# Generate (x, y) values in the unit square (0,1) x (0,1)
+x_vals = np.linspace(0, 1, num_points)
+y_vals = np.linspace(0, 1, num_points)
+X_grid, Y_grid = np.meshgrid(x_vals, y_vals)
+f1 = lambda x,y : (x*0.5+1)*cos(pi/2 * (y))
+f2 = lambda x,y : (x*.5+1)*sin(pi/2 * (y))
+# Apply transformation
+X_transformed = f1(X_grid,Y_grid )
+Y_transformed = f2(X_grid,Y_grid )
+
+
+# Plot the transformed points
+plt.figure(figsize=(6, 6))
+
+
+for i in range(num_points):
+   phidx = X_transformed[:,i]
+   phidy = Y_transformed[:,i]
+
+   plt.plot(phidx, phidy, '-b', linewidth = .3)
+for i in range(num_points):
+   phidx = X_transformed[i,:]
+   phidy = Y_transformed[i,:]
+   plt.plot(phidx, phidy, '-b', linewidth = .3)
+
+plt.show()
+
+''' 
    
 for i in range(Vh1.nbasis[1]):
    phidx = xmp2[:,i]
@@ -396,4 +439,3 @@ if True :
 	fig.tight_layout()
 	plt.savefig('2patch.png')
 	plt.show()
-
