@@ -117,7 +117,7 @@ Vh1       = TensorSpace(Vh1, Vh1)# after refinement
 #----------------------------------------
 # ... Circle :  patch 1
 geometry  = '../parallel_Schwarz_method_Robin_2D/circle1.xml'
-
+#geometry = '../parallel_Schwarz_method_Robin_2D/circle_ove1.xml'
 print('#---IN-UNIFORM--MESH-Poisson equation patch 1', geometry)
 
 # ... Assembling mapping
@@ -128,6 +128,7 @@ ymp1      = zeros(VH1.nbasis)
 xmp1[:,:], ymp1[:,:] =  mp1.coefs()
 
 geometry = '../parallel_Schwarz_method_Robin_2D/circle2.xml'
+#geometry = '../parallel_Schwarz_method_Robin_2D/circle_ove2.xml'
 print('#---IN-UNIFORM--MESH-Poisson equation patch 2', geometry)
 
 # ... Assembling mapping
@@ -136,11 +137,11 @@ xmp2 = zeros(VH1.nbasis)
 ymp2 = zeros(VH1.nbasis)
 
 xmp2[:,:], ymp2[:,:] =  mp2.coefs()
-xmp2[0,:] = xmp1[-1,:] 
-ymp2[0,:] = ymp1[-1,:]
+#xmp2[0,:] = xmp1[-1,:] 
+#ymp2[0,:] = ymp1[-1,:]
 # ... C1 continuity garad(F1 = F2)  = garad(F2)  interface
-xmp2[1,:] = 2.*xmp1[-1,:] - xmp1[-2,:]
-ymp2[1,:] = 2.*ymp1[-1,:] - ymp1[-2,:] 
+#xmp2[1,:] = 2.*xmp1[-1,:] - xmp1[-2,:]
+#ymp2[1,:] = 2.*ymp1[-1,:] - ymp1[-2,:] 
 #... Prolongation by knot insertion
 M_mp      = prolongation_matrix(VH1, Vh1)
 
@@ -150,7 +151,7 @@ xmp2      = (M_mp.dot(xmp2.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nb
 ymp2      = (M_mp.dot(ymp2.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nbasis)
 
 #-------------++++++++++++++++-------------------------------------------------
-'''
+
 fig =plt.figure() 
 for i in range(Vh1.nbasis[1]):
    phidx = xmp1[:,i]
@@ -162,6 +163,26 @@ for i in range(Vh1.nbasis[0]):
    phidy = ymp1[i,:]
 
    plt.plot(phidx, phidy, '-b', linewidth = .3)
+phidx = xmp1[:,0]
+phidy = ymp1[:,0]
+plt.plot(phidx, phidy, 'm', linewidth=2., label = 'patch 2 $Im([0,1]^2_{y=0})$')
+# ...
+phidx = xmp1[:,Vh1.nbasis[1]-1]
+phidy = ymp1[:,Vh1.nbasis[1]-1]
+plt.plot(phidx, phidy, 'b', linewidth=2. ,label = 'patch 2 $Im([0,1]^2_{y=1})$')
+#''
+
+phidx = xmp1[0,:]
+phidy = ymp1[0,:]
+plt.plot(phidx, phidy, 'r',  linewidth=2., label = 'patch 2 $Im([0,1]^2_{x=0})$')
+# ...
+phidx = xmp1[Vh1.nbasis[1]-1,:]
+phidy = ymp1[Vh1.nbasis[1]-1,:]
+plt.plot(phidx, phidy, 'g', linewidth= 2., label = 'patch 2 $Im([0,1]^2_{x=1}$)')
+
+
+   
+   
 for i in range(Vh1.nbasis[1]):
    phidx = xmp2[:,i]
    phidy = ymp2[:,i]
@@ -174,21 +195,6 @@ for i in range(Vh1.nbasis[0]):
    plt.plot(phidx, phidy, '-b', linewidth = .3)
    
 #.. Plot the surface in the first patch 1
-phidx = xmp1[:,0]
-phidy = ymp1[:,0]
-plt.plot(phidx, phidy, 'm', linewidth=2., label = 'patch 2 $Im([0,1]^2_{y=0})$')
-# ...
-phidx = xmp1[:,Vh1.nbasis[1]-1]
-phidy = ymp1[:,Vh1.nbasis[1]-1]
-plt.plot(phidx, phidy, 'b', linewidth=2. ,label = 'patch 2 $Im([0,1]^2_{y=1})$')
-#''
-phidx = xmp1[0,:]
-phidy = ymp1[0,:]
-plt.plot(phidx, phidy, 'r',  linewidth=2., label = 'patch 2 $Im([0,1]^2_{x=0})$')
-# ...
-phidx = xmp1[Vh1.nbasis[1]-1,:]
-phidy = ymp1[Vh1.nbasis[1]-1,:]
-plt.plot(phidx, phidy, 'g', linewidth= 2., label = 'patch 2 $Im([0,1]^2_{x=1}$)')
 
 #.. Plot the surface in the second patch 2
 
@@ -209,17 +215,18 @@ phidy = ymp2[Vh1.nbasis[1]-1,:]
 plt.plot(phidx, phidy, 'g', linewidth= 2., label = 'patch 1 $Im([0,1]^2_{x=1}$)')
 
 plt.legend()
-plt.scatter(xmp1[Vh1.nbasis[1]-1,:],ymp1[Vh1.nbasis[1]-1,:], color= 'black', linewidths=3.)
+#plt.scatter(xmp1[Vh1.nbasis[1]-1,:],ymp1[Vh1.nbasis[1]-1,:], color= 'black', linewidths=3.)
 #plt.scatter(xmp1[Vh1.nbasis[1]-1,Vh1.nbasis[1]-1],ymp1[Vh1.nbasis[1]-1,Vh1.nbasis[1]-1],  color= 'black', linewidths=3.)
-plt.show()
-'''
+plt.show() 
+
+
 #--------------------------------------------------------------
 
 #...End of parameterisation
 #--------------------------------------------------------------
 # ... please take into account that : beta < alpha 
 alpha       = 0.5 # fixed by the geometry parameterization
-beta        = 0.5 # fixed by the geometry parameterization
+beta        = 0.5# fixed by the geometry parameterization
 overlap     = alpha - beta
 xuh_0       = []
 xuh_01      = []
@@ -389,3 +396,4 @@ if True :
 	fig.tight_layout()
 	plt.savefig('2patch.png')
 	plt.show()
+
