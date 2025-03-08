@@ -58,11 +58,11 @@ class poisson_DDM(object):
        self.lu             = sla.splu(csc_matrix(K1))
        self.V1             = V1
 
-   def solve(self, V2, u, domain_nb, ovlp_value):
+   def solve(self, V2, u, domain_nb, ovlp_value_left, ovlp_value_right):
    
        # ... compute the the updated dirchlet boundary
        u_d                 = StencilVector(self.V1.vector_space)
-       rhs                 = assemble_Pr(V2, fields = [u], knots = True, value = [ovlp_value]) 
+       rhs                 = assemble_Pr(V2, fields = [u], knots = True, value = [ovlp_value_left, ovlp_value_right]) 
 
        # ... update the position of dichlet boundary
        x                   = np.zeros(self.V1.nbasis)
@@ -88,17 +88,16 @@ class poisson_DDM(object):
        H1_norm             = norm[1]       
        return u, x, l2_norm, H1_norm
 
-degree      = 6
-nelements   = 128
-
+degree      = 2
+nelements   = 16
 
 # ... please take into account that : beta < alpha 
-alpha       = 0.5  #grids__[nelements//2+1]
-beta        = 0.5 # grids__[nelements//2-1]
+alpha       = 0.75
+beta        = 0.25
 overlap     = alpha - beta
 xuh_0    = []
 xuh_01   = []
-iter_max = 100
+iter_max = 30
 
 #----------------------
 #..... Initialisation
@@ -128,8 +127,8 @@ xuh_01.append(xuh_1)
 uh_0.from_array(V1_0, xuh)
 uh_1.from_array(V1_1, xuh_1)
 # ...
-l2_err = l2_norm + l2_norm1
-H1_err = H1_norm + H1_norm1
+l2_err = sqrt(l2_norm**2 + l2_norm1**2)
+H1_err =sqrt( H1_norm**2 + H1_norm1**2)
 print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
 
 for i in range(iter_max):
@@ -143,13 +142,24 @@ for i in range(iter_max):
 	uh_0.from_array(V1_0, xuh)
 	uh_1.from_array(V1_1, xuh_1)
 	# ...
-	l2_err = l2_norm + l2_norm1
-	H1_err = H1_norm + H1_norm1
-	print('iteration {} <-----> L^2-error ={} -----> H^1-error = {}'.format(i, l2_err, H1_err))
+	l2_err = sqrt(l2_norm**2 + l2_norm1**2)
+                   H1_err =sqrt( H1_norm**2 + H1_norm1**2)
+	print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
 
 #---Compute a solution
 nbpts = 100
+
+#---Compute a solution
 from simplines import plot_field_1d
+nbpts = 100
+plt.figure()
+plot_field_1d(V1_0.knots, V1_0.degree, xuh, nx=101, color='b')
+plot_field_1d(V1_1.knots, V1_1.degree, xuh_1, nx=101, color='r')
+plt.show()
+
+# # ........................................................
+# ....................For a plot
+# #.........................................................
 if True :
 	plt.figure()
 	for i in range(iter_max):
@@ -157,11 +167,3 @@ if True :
 		plot_field_1d(V1_1.knots, V1_1.degree, xuh_01[i], nx=101, color='r')
 	plt.show()
 
-#---Compute a solution
-
-nbpts = 100
-plt.figure()
-plot_field_1d(V1_0.knots, V1_0.degree, xuh, nx=101, color='b')
-plot_field_1d(V1_1.knots, V1_1.degree, xuh_1, nx=101, color='r')
-plt.show()
-{}
