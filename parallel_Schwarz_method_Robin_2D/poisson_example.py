@@ -123,6 +123,8 @@ Vh1       = TensorSpace(Vh1, Vh1)# after refinement
 
 
 geometry  = '../parallel_Schwarz_method_Robin_2D/Annalus1.xml'
+#geometry  = '../parallel_Schwarz_method_Robin_2D/Annulus_over1.xml'
+
 print('#---IN-UNIFORM--MESH-Poisson equation patch 1', geometry)
 
 
@@ -140,6 +142,7 @@ xmp1[:,:], ymp1[:,:] =  mp1.coefs()
 #geometry = '../parallel_Schwarz_method_Robin_2D/circle_ove2.xml'
 
 geometry = '../parallel_Schwarz_method_Robin_2D/Annalus2.xml'
+#geometry  = '../parallel_Schwarz_method_Robin_2D/Annulus_over2.xml'
 print('#---IN-UNIFORM--MESH-Poisson equation patch 2', geometry)
 
 

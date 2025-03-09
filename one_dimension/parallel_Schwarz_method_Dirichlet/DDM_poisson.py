@@ -119,6 +119,7 @@ DDM_1   = poisson_DDM(V1_1)
 uh_0    = StencilVector(V1_0.vector_space)
 uh_1    = StencilVector(V1_1.vector_space)
 
+print(uh_0)
 print('#---IN-UNIFORM--MESH')
 u_0,   xuh, l2_norm, H1_norm     = DDM_0.solve(V1_1, uh_1, 0, alpha)
 xuh_0.append(xuh)
@@ -142,6 +143,7 @@ for i in range(iter_max):
 	# ...
 	uh_0.from_array(V1_0, xuh)
 	uh_1.from_array(V1_1, xuh_1)
+
 	# ...
 	l2_err = l2_norm + l2_norm1
 	H1_err = H1_norm + H1_norm1
