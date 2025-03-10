@@ -102,7 +102,7 @@ class poisson_DDM(object):
 degree      = 2
 nelements   = 16
 
-iter_max = 500
+iter_max = 100
 
 grid = linspace(0., 1., nelements+1)
 
@@ -137,8 +137,8 @@ def split_interval_from_grid(grid, N, r):
 
 # Example usage:
 	
-N = 12  # Number of sub-intervals
-r = 1  # Overlap elements
+N = 4  # Number of sub-intervals
+r = 2  # Overlap elements
 intervals = asarray(split_interval_from_grid(grid, N, r))
 
 # cearte your grids
