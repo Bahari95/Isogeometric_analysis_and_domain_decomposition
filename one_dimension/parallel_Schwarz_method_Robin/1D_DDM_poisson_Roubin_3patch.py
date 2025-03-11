@@ -104,7 +104,7 @@ class DDM_poisson(object):
 
 
 
-degree      = 2
+degree      = 6
 nelements   = 32
  
 alpha_1       = 0.3#0.4

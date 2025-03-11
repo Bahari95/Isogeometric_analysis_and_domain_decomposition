@@ -220,15 +220,7 @@ def assemble_vector_ex01(ne1, ne2, ne3, p1, p2, p3, spans_1, spans_2, spans_3,
 		     	# ...
 	    rhs[i1_ovrlp] += neum_sign*ux+S_DDM*u  
 	    degree         = p3
-	    #..
-	    '''
-	    left           = empty( degree )
-	    right          = empty( degree )
-	    a              = empty( (       2, degree+1) )
-	    ndu            = empty( (degree+1, degree+1) )
-	    ders           = zeros( (     nders+1, degree+1) ) # output array
-	    '''
-	    #...
+	    
 	    basis3         = zeros((nders+1, degree+1))
 	    xq = ovlp_value_right
 	    #~~~~~~~~~~~~~~~
