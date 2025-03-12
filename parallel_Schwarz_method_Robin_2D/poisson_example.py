@@ -29,7 +29,7 @@ from   scipy.sparse                 import kron
 from   scipy.sparse                 import csr_matrix
 from   scipy.sparse                 import csc_matrix, linalg as sla
 from   numpy                        import zeros, linalg, asarray, linspace
-from   numpy                        import cos, sin, pi, exp, sqrt, arctan2
+from   numpy                        import cos, sin, pi, exp, sqrt, arctan2, cosh
 from   tabulate                     import tabulate
 import numpy                        as     np
 import timeit
@@ -39,57 +39,52 @@ import time
 #.......Poisson ALGORITHM
 #==============================================================================
 class DDM_poisson(object):
-   def __init__(self, V, V_TOT,  u11_mpH, u12_mpH,  v11_mpH, v12_mpH, u_d, S_DDM, domain_nb, ovlp_value):
+	def __init__(self, V, V_TOT,  u11_mpH, u12_mpH,  v11_mpH, v12_mpH, u_d, S_DDM, domain_nb, ovlp_value):
+		# ++++
+		stiffness           = assemble_stiffness2D(V, fields = [u11_mpH, u12_mpH], value = [domain_nb, S_DDM, ovlp_value] )
+		if domain_nb == 0 :
+			stiffness       = apply_dirichlet(V, stiffness, dirichlet = [[True, False],[True, True]])
+		else :
+			stiffness       = apply_dirichlet(V, stiffness, dirichlet = [[False, True],[True, True]])
 
-  
-
-       # ++++
-       stiffness           = assemble_stiffness2D(V, fields = [u11_mpH, u12_mpH], value = [domain_nb, S_DDM, ovlp_value] )
-       if domain_nb == 0 :
-           stiffness       = apply_dirichlet(V, stiffness, dirichlet = [[True, False],[True, True]])
-       else :
-           stiffness       = apply_dirichlet(V, stiffness, dirichlet = [[False, True],[True, True]])
-       
-       # ...
-       M                   = stiffness.tosparse()
-       self.lu             = sla.splu(csc_matrix(M))
-       self.domain_nb      = domain_nb
-       self.S_DDM          = S_DDM
-       self.ovlp_value     = ovlp_value
-       self.sp             = [V, V_TOT]
-       self.u11_mpH        = u11_mpH 
-       self.u12_mpH        = u12_mpH
-       self.v11_mpH        = v11_mpH 
-       self.v12_mpH        = v12_mpH
-       self.u_d			   = u_d
-       self.x_d			   = u_d.toarray().reshape(V.nbasis)
-   def solve(self, u_np):
-          
-       V, V_TOT            = self.sp[:]
-       # ...
-       u                   = StencilVector(V.vector_space)
-       # ++++
-       #--Assembles a right hand side of Poisson equation
-       rhs                 = StencilVector(V.vector_space)
-       rhs                 = assemble_rhs( V_TOT, fields = [self.u11_mpH, self.u12_mpH, self.u_d, self.v11_mpH, self.v12_mpH, u_np], knots = True, value = [self.domain_nb, self.S_DDM, self.ovlp_value], out = rhs )
-
-       if self.domain_nb == 0 :
-          rhs              = apply_dirichlet(V, rhs, dirichlet = [[True, False],[True, True]])
-       else :
-          rhs              = apply_dirichlet(V, rhs, dirichlet = [[False, True],[True, True]])
-       b                   = rhs.toarray()
-       # ...
-       x                   = self.lu.solve(b)
-       # ...
-       x                   = x.reshape(V.nbasis) + self.x_d
-       #...
-       u.from_array(V, x)
-       # ...
-       Norm                = assemble_norm_l2(V, fields=[self.u11_mpH, self.u12_mpH, u]) 
-       norm                = Norm.toarray()
-       l2_norm             = norm[0]
-       H1_norm             = norm[1]       
-       return u, x, l2_norm, H1_norm
+		# ...
+		M                   = stiffness.tosparse()
+		self.lu             = sla.splu(csc_matrix(M))
+		self.domain_nb      = domain_nb
+		self.S_DDM          = S_DDM
+		self.ovlp_value     = ovlp_value
+		self.sp             = [V, V_TOT]
+		self.u11_mpH        = u11_mpH 
+		self.u12_mpH        = u12_mpH
+		self.v11_mpH        = v11_mpH 
+		self.v12_mpH        = v12_mpH
+		self.u_d			   = u_d
+		self.x_d			   = u_d.toarray().reshape(V.nbasis)
+	def solve(self, u_np):   	       
+		V, V_TOT            = self.sp[:]
+		# ...
+		u                   = StencilVector(V.vector_space)
+		# ++++
+		#--Assembles a right hand side of Poisson equation
+		rhs                 = StencilVector(V.vector_space)
+		rhs                 = assemble_rhs( V_TOT, fields = [self.u11_mpH, self.u12_mpH, self.u_d, self.v11_mpH, self.v12_mpH, u_np], knots = True, value = [self.domain_nb, self.S_DDM, self.ovlp_value], out = rhs )
+		if self.domain_nb == 0 :
+			rhs              = apply_dirichlet(V, rhs, dirichlet = [[True, False],[True, True]])
+		else :
+			rhs              = apply_dirichlet(V, rhs, dirichlet = [[False, True],[True, True]])
+		b                   = rhs.toarray()
+		# ...
+		x                   = self.lu.solve(b)
+		# ...
+		x                   = x.reshape(V.nbasis) + self.x_d
+		#...
+		u.from_array(V, x)
+		# ...
+		Norm                = assemble_norm_l2(V, fields=[self.u11_mpH, self.u12_mpH, u]) 
+		norm                = Norm.toarray()
+		l2_norm             = norm[0]
+		H1_norm             = norm[1]       
+		return u, x, l2_norm, H1_norm
 
 degree      = 2
 quad_degree = degree + 1
@@ -149,8 +144,8 @@ xmp2 = zeros(VH1.nbasis)
 ymp2 = zeros(VH1.nbasis)
 
 xmp2[:,:], ymp2[:,:] =  mp2.coefs()
-#xmp2[0,:] = xmp1[-1,:] 
-#ymp2[0,:] = ymp1[-1,:]
+xmp2[0,:] = xmp1[-1,:] 
+ymp2[0,:] = ymp1[-1,:]
 # ... C1 continuity garad(F1 = F2)  = garad(F2)  interface
 #xmp2[1,:] = 2.*xmp1[-1,:] - xmp1[-2,:]
 #ymp2[1,:] = 2.*ymp1[-1,:] - ymp1[-2,:] 
@@ -258,8 +253,8 @@ phidy = ymp2[Vh1.nbasis[1]-1,:]
 plt.plot(phidx, phidy, 'g', linewidth= 2., label = 'patch 1 $Im([0,1]^2_{x=1}$)')
 
 plt.legend()
-#plt.scatter(xmp1[Vh1.nbasis[1]-1,:],ymp1[Vh1.nbasis[1]-1,:], color= 'black', linewidths=3.)
-#plt.scatter(xmp1[Vh1.nbasis[1]-1,Vh1.nbasis[1]-1],ymp1[Vh1.nbasis[1]-1,Vh1.nbasis[1]-1],  color= 'black', linewidths=3.)
+plt.scatter(xmp1[Vh1.nbasis[1]-1,:],ymp1[Vh1.nbasis[1]-1,:], color= 'black', linewidths=3.)
+plt.scatter(xmp1[Vh1.nbasis[1]-2,:],ymp1[Vh1.nbasis[1]-2,:],  color= 'red', linewidths=3.)
 plt.show() 
 
 
@@ -276,7 +271,8 @@ xuh_01      = []
 iter_max    = 100
 S_DDM       = 1./alpha**2 #alpha/(nelements+1)
 #.. test 0
-u_exact   = lambda x, y : sin(2.*pi*x)*sin(2.*pi*y)
+#u_exact   = lambda x, y : sin(2.*pi*x)*sin(2.*pi*y)
+u_exact   = lambda x, y : 5.0/cosh(50 * ((8*(x-0.5)**2) -y**2* 0.125))*(1.-x**2-y**2)*y
 #--------------------------
 #..... Initialisation
 #--------------------------
@@ -380,14 +376,14 @@ if True :
 	u_0  = []
 	u_01 = []
 	for i in range(iter_max):
-	    u_0.append(pyccel_sol_field_2d((nbpts, nbpts),  xuh_0[i],   V_0.knots, V_0.degree)[0][:,50])
-	    u_01.append(pyccel_sol_field_2d((nbpts, nbpts),  xuh_01[i],   V_1.knots, V_1.degree)[0][:,50])
+		u_0.append(pyccel_sol_field_2d((nbpts, nbpts),  xuh_0[i],   V_0.knots, V_0.degree)[0][:,50])
+		u_01.append(pyccel_sol_field_2d((nbpts, nbpts),  xuh_01[i],   V_1.knots, V_1.degree)[0][:,50])
 	plt.figure() 
 	plt.axes().set_aspect('equal')
 	plt.subplot(121)
 	for i in range(iter_max-1):
-	     plt.plot(X[:,50], u_0[i], '-k', linewidth = 1.)
-	     plt.plot(X_1[:,50], u_01[i], '-k', linewidth = 1.) 
+		plt.plot(X[:,50], u_0[i], '-k', linewidth = 1.)
+		plt.plot(X_1[:,50], u_01[i], '-k', linewidth = 1.) 
 	plt.plot(X[:,50], u_0[i+1], '-k', linewidth = 1., label='$\mathbf{Un_0-iter(i)}$')
 	plt.plot(X_1[:,50], u_01[i+1], '-k', linewidth = 1., label='$\mathbf{Un_1-iter(i)}$')
 	plt.legend()
@@ -434,7 +430,7 @@ if True :
 	# --- Formatting ---
 	axes.set_title("Solution the in whole domain ", fontweight='bold')
 	for label in axes.get_xticklabels() + axes.get_yticklabels():
-	    label.set_fontweight('bold')
+		label.set_fontweight('bold')
 
 	fig.tight_layout()
 	plt.savefig('2patch.png')

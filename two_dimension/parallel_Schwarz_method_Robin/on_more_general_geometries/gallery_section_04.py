@@ -115,11 +115,8 @@ def assemble_matrix_un_ex01(ne1, ne2,
                     x1       = ovlp_value
                     x2       = points_2[ie2,g2]
 
-
-                    F1x      = 2.0*sqrt(1.0-0.5*(2.0*x2-1.0)**2)
                     F1y      = -(2.0*x1-1.0)*(2.0*x2-1.0)/sqrt(1.0-0.5*(2.0*x2-1.0)**2)
                     F2y      = 2.0*sqrt(1.0-0.5*(2.0*x1-1.0)**2)
-                    F2x      = -(2.0*x1-1.0)*(2.0*x2-1.0)/sqrt(1.0-0.5*(2.0*x1-1.0)**2)
                     det_Hess = sqrt(F2y**2+F1y**2)
 
                     J_mat[0, g2]      = det_Hess
@@ -150,11 +147,8 @@ def assemble_matrix_un_ex01(ne1, ne2,
                     x1       = ovlp_value
                     x2       = points_2[ie2,g2]
 
-
-                    F1x      = 2.0*sqrt(1.0-0.5*(2.0*x2-1.0)**2)
                     F1y      = -(2.0*x1-1.0)*(2.0*x2-1.0)/sqrt(1.0-0.5*(2.0*x2-1.0)**2)
                     F2y      = 2.0*sqrt(1.0-0.5*(2.0*x1-1.0)**2)
-                    F2x      = -(2.0*x1-1.0)*(2.0*x2-1.0)/sqrt(1.0-0.5*(2.0*x1-1.0)**2)
                     det_Hess = sqrt(F2y**2+F1y**2)
 
                     J_mat[0, g2]      = det_Hess
@@ -376,18 +370,13 @@ def assemble_vector_ex01(ne1, ne2, ne3, ne4, p1, p2, p3, p4, spans_1, spans_2,  
                     x1       = ovlp_value
                     x2       = points_2[ie2,g2]
 
-                    F1    = (2.0*x1-1.0)*sqrt(1.0-0.5*(2.0*x2-1.0)**2)
-                    F2    = (2.0*x2-1.0)*sqrt(1.0-0.5*(2.0*x1-1.0)**2)
                     F1x   = 2.0*sqrt(1.0-0.5*(2.0*x2-1.0)**2)
                     F1y   = -(2.0*x1-1.0)*(2.0*x2-1.0)/sqrt(1.0-0.5*(2.0*x2-1.0)**2)
 
                     F2y   = 2.0*sqrt(1.0-0.5*(2.0*x1-1.0)**2)
                     F2x   = -(2.0*x1-1.0)*(2.0*x2-1.0)/sqrt(1.0-0.5*(2.0*x1-1.0)**2)
-
                     det_Hess = abs(F1x*F2y-F1y*F2x)
-                    # ...
-                    #comp_1         = ( F2y*ux - F2x*uy)/det_Hess * tang_1/sqrt(tang_1**2+tang_2**2)
-                    #comp_2         = (-F1y*ux + F1x*uy)/det_Hess * tang_2/sqrt(tang_1**2+tang_2**2)
+
                     # ...
                     comp_1         = neum_sign1 * ( F2y*ux - F2x*uy)/det_Hess * F2y #/sqrt(F1y**2+ F2y**2)
                     comp_2         = neum_sign2 * (-F1y*ux + F1x*uy)/det_Hess * F1y #/sqrt(F1y**2+ F2y**2)

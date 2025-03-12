@@ -86,13 +86,13 @@ quad_degree = degree + 1
 nelements   = 64
 
 # ... please take into account that : beta < alpha 
-alpha       = 0.8
+alpha       = 0.7
 beta        = 0.2
 overlap     = alpha - beta
 xuh_0       = []
 xuh_01      = []
 iter_max    = 20
-S_DDM       = alpha/(nelements+1)
+S_DDM       = 1./alpha**8 #alpha/(nelements+1)
 #--------------------------
 #..... Initialisation
 #--------------------------

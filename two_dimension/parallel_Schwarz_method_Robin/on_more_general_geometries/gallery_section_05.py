@@ -119,12 +119,9 @@ def assemble_matrix_un_ex01(ne1, ne2,
                     x2       = points_2[ie2,g2]
 
                     F1y = -theta* ( r_min+delta_r*x1)*sin(theta*x2)
-                    F1x = delta_r*cos(theta*x2)
-
-                    F2x = delta_r*sin(theta*x2)
                     F2y = theta*( r_min+delta_r*x1)*cos(theta*x2)
-                    det_Hess = abs(F1x*F2y-F1y*F2x)
-                    
+                    det_Hess = sqrt(F2y**2+F1y**2)
+
                     J_mat[0, g2]      = det_Hess
                     
                 for il_2 in range(0, p2+1):
@@ -154,12 +151,9 @@ def assemble_matrix_un_ex01(ne1, ne2,
                     x2       = points_2[ie2,g2]
 
                     F1y = -theta* ( r_min+delta_r*x1)*sin(theta*x2)
-                    F1x = delta_r*cos(theta*x2)
-
-                    F2x = delta_r*sin(theta*x2)
                     F2y = theta*( r_min+delta_r*x1)*cos(theta*x2)
 
-                    det_Hess = abs(F1x*F2y-F1y*F2x)
+                    det_Hess = sqrt(F2y**2+F1y**2)
 
                     J_mat[0, g2]      = det_Hess
                     
