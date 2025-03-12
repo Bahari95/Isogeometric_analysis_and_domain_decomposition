@@ -58,18 +58,29 @@ class poisson_DDM(object):
        self.lu             = sla.splu(csc_matrix(K1))
        self.V1             = V1
 
-   def solve(self, V2, u, domain_nb, ovlp_value):
+   def solve(self, V2, u1, domain_nb, ovlp_value_left, V3=None, u2=None, ovlp_value_right=None):
    
        # ... compute the the updated dirchlet boundary
-       u_d                 = StencilVector(self.V1.vector_space)
-       rhs                 = assemble_Pr(V2, fields = [u], knots = True, value = [ovlp_value]) 
+       u_d                   = StencilVector(self.V1.vector_space)
+       x                     = np.zeros(self.V1.nbasis)
+       if ovlp_value_right is None:
+          rhs_l                 = assemble_Pr(V2, fields = [u1], knots = True, value = [ovlp_value_left]) 
+       	  if domain_nb ==0:
+       	     print(ovlp_value_left, domain_nb )
+             x[-1]          = rhs_l.toarray()[0]       
+       	  else :
+
+             x[0]           = rhs_l.toarray()[0]
+            
+       else:
+          rhs_l                 = assemble_Pr(V2, fields = [u1], knots = True, value = [ovlp_value_left]) 
+          rhs_r                 = assemble_Pr(V3, fields = [u2], knots = True, value = [ovlp_value_right])
+          x[0]           = rhs_l.toarray()[0]
+          x[-1]          = rhs_r.toarray()[0]  
+       	  
 
        # ... update the position of dichlet boundary
-       x                   = np.zeros(self.V1.nbasis)
-       if domain_nb ==0:
-            x[-1]          = rhs.toarray()[0]       
-       else :
-            x[0]           = rhs.toarray()[0]
+       
        u_d.from_array(self.V1, x)
 
        #--Assembles a right hand side of Poisson equation
@@ -80,90 +91,113 @@ class poisson_DDM(object):
        xkron               = self.lu.solve(b)       
        # ...
        x[ 1:-1 ]           = xkron
-       u.from_array(self.V1, x)
+       u_d.from_array(self.V1, x)
        # ...
-       Norm                = assemble_norm_l2(self.V1, fields=[u]) 
+       Norm                = assemble_norm_l2(self.V1, fields=[u_d]) 
        norm                = Norm.toarray()
        l2_norm             = norm[0]
        H1_norm             = norm[1]       
-       return u, x, l2_norm, H1_norm
+       return u_d, x, l2_norm, H1_norm
 
-degree      = 6
-nelements   = 128
-
+degree      = 2
+nelements   = 32
 
 # ... please take into account that : beta < alpha 
-alpha       = 0.5  #grids__[nelements//2+1]
-beta        = 0.5 # grids__[nelements//2-1]
-overlap     = alpha - beta
+alpha_1       = 0.4
+alpha_2        = 0.3
+alpha_3       = 0.7
+alpha_4        = 0.6
+#overlap     = alpha - beta
 xuh_0    = []
 xuh_01   = []
-iter_max = 100
+xuh_02   = []
+iter_max = 1000
 
 #----------------------
 #..... Initialisation
 #----------------------
-grids_0 = linspace(0, alpha, nelements+1)
+grids_0 = linspace(0., alpha_1, nelements+1)
 # create the spline space for each direction
 V1_0    = SplineSpace(degree=degree, nelements= nelements, grid =grids_0)
 
-grids_1 = linspace(beta, 1., nelements+1)
+grids_1 = linspace(alpha_2, alpha_3, nelements+1)
 # create the spline space for each direction
 V1_1    = SplineSpace(degree=degree, nelements= nelements, grid =grids_1)
+
+grids_2 = linspace(alpha_4, 1., nelements+1)
+# create the spline space for each direction
+V1_2    = SplineSpace(degree=degree, nelements= nelements, grid =grids_2)
+
 
 #... Initialization of Poissson DDM solver
 DDM_0   = poisson_DDM(V1_0)
 DDM_1   = poisson_DDM(V1_1)
+DDM_2   = poisson_DDM(V1_2)
 
 # ... communication Dirichlet interface
 uh_0    = StencilVector(V1_0.vector_space)
 uh_1    = StencilVector(V1_1.vector_space)
+uh_2    = StencilVector(V1_2.vector_space)
 
-print(uh_0)
 print('#---IN-UNIFORM--MESH')
-u_0,   xuh, l2_norm, H1_norm     = DDM_0.solve(V1_1, uh_1, 0, alpha)
+# domain0 ( 0. , alpha_1 )
+u_0,   xuh, l2_norm, H1_norm     = DDM_0.solve(V2 = V1_1, u1 = uh_1, domain_nb = 0, ovlp_value_left= alpha_1)
 xuh_0.append(xuh)
-u_1, xuh_1, l2_norm1, H1_norm1   = DDM_1.solve(V1_0, uh_0, 1, beta)
+#  domain 1 ( alpha_2 , alpha_3 )
+u_1, xuh_1, l2_norm1, H1_norm1   = DDM_1.solve(V2 = V1_0, u1 = uh_0, domain_nb =  2, ovlp_value_left = alpha_2, V3 = V1_2, u2 = uh_2, ovlp_value_right = alpha_3)
 xuh_01.append(xuh_1)
+#  domain 1 ( alpha_4 , 1. )
+u_2, xuh_2, l2_norm2, H1_norm2   = DDM_2.solve(V2 = V1_1, u1 = uh_1, domain_nb =  1, ovlp_value_left = alpha_4)
+xuh_02.append(xuh_2)
 # ...
 uh_0.from_array(V1_0, xuh)
 uh_1.from_array(V1_1, xuh_1)
+uh_2.from_array(V1_2, xuh_2)
 # ...
-l2_err = l2_norm + l2_norm1
-H1_err = H1_norm + H1_norm1
+l2_err = sqrt(l2_norm**2 + l2_norm1**2 + l2_norm2 **2 )
+H1_err =sqrt( H1_norm**2 + H1_norm1**2 +  H1_norm2**2 )
 print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
 
 for i in range(iter_max):
-	# ... Dirichlezt boudndary condition in x = 0.75 and 0.25
-	#...
-	u_0,   xuh, l2_norm, H1_norm     = DDM_0.solve(V1_1, uh_1, 0, alpha)
+	u_0,   xuh, l2_norm, H1_norm     = DDM_0.solve(V2 = V1_1, u1 = uh_1, domain_nb = 0, ovlp_value_left= alpha_1)
 	xuh_0.append(xuh)
-	u_1, xuh_1, l2_norm1, H1_norm1   = DDM_1.solve(V1_0, uh_0, 1, beta)
+	#  domain 1 ( alpha_2 , alpha_3 )
+	u_1, xuh_1, l2_norm1, H1_norm1   = DDM_1.solve(V2 = V1_0, u1 = uh_0, domain_nb =  2, ovlp_value_left = alpha_2, V3= V1_2, u2=uh_2, ovlp_value_right= alpha_3)
 	xuh_01.append(xuh_1)
+	#  domain 1 ( alpha_4 , 1. )
+	u_2, xuh_2, l2_norm2, H1_norm2   = DDM_2.solve(V2 = V1_1, u1 = uh_1, domain_nb =  1, ovlp_value_left = alpha_4)
+	xuh_02.append(xuh_2)
 	# ...
 	uh_0.from_array(V1_0, xuh)
 	uh_1.from_array(V1_1, xuh_1)
-
+	uh_2.from_array(V1_2, xuh_2)
 	# ...
-	l2_err = l2_norm + l2_norm1
-	H1_err = H1_norm + H1_norm1
-	print('iteration {} <-----> L^2-error ={} -----> H^1-error = {}'.format(i, l2_err, H1_err))
+	l2_err = sqrt(l2_norm**2 + l2_norm1**2 + l2_norm2 **2 )
+	H1_err =sqrt( H1_norm**2 + H1_norm1**2 +  H1_norm2**2 )
+	print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
 
 #---Compute a solution
-nbpts = 100
+
+#---Compute a solution
 from simplines import plot_field_1d
+nbpts = 100
+plt.figure()
+plot_field_1d(V1_0.knots, V1_0.degree, xuh, nx=101, color='b')
+plot_field_1d(V1_2.knots, V1_2.degree, xuh_2, nx=101, color='r')
+plot_field_1d(V1_1.knots, V1_1.degree, xuh_1, nx=101, color='p')
+plt.show()
+
+# # ........................................................
+# ....................For a plot
+# #.........................................................
 if True :
 	plt.figure()
 	for i in range(iter_max):
 		plot_field_1d(V1_0.knots, V1_0.degree, xuh_0[i],  nx=101, color='b')
+		plot_field_1d(V1_2.knots, V1_2.degree, xuh_02[i], nx=101, color='p')
 		plot_field_1d(V1_1.knots, V1_1.degree, xuh_01[i], nx=101, color='r')
+		
+		plt.savefig('DDMp_sol_evol.png')
 	plt.show()
 
-#---Compute a solution
 
-nbpts = 100
-plt.figure()
-plot_field_1d(V1_0.knots, V1_0.degree, xuh, nx=101, color='b')
-plot_field_1d(V1_1.knots, V1_1.degree, xuh_1, nx=101, color='r')
-plt.show()
-{}
