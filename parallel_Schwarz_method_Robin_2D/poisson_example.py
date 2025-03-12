@@ -274,8 +274,8 @@ xuh_01      = []
 iter_max    = 100
 S_DDM       = 1./alpha**2 #alpha/(nelements+1)
 #.. test 0
-#u_exact   = lambda x, y : sin(2.*pi*x)*sin(2.*pi*y)
-u_exact   = lambda x, y : 5.0/cosh(50 * ((8*(x-0.5)**2) -y**2* 0.125))*(1.-x**2-y**2)*y
+u_exact   = lambda x, y : sin(2.*pi*x)*sin(2.*pi*y)
+#u_exact   = lambda x, y : 5.0/cosh(50 * ((8*(x-0.5)**2) -y**2* 0.125))*(1.-x**2-y**2)*y
 #--------------------------
 #..... Initialisation
 #--------------------------
