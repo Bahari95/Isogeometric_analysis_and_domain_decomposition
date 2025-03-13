@@ -131,8 +131,11 @@ def split_interval_from_grid(grid, N, r):
     for i in range(N):
         start_idx = i * m
         end_idx = start_idx + m + r - 1  # Include overlap
-        if end_idx >= len(grid):
-            end_idx = len(grid) - 1  # Ensure we don't exceed grid size
+
+        # Ensure the last sub-interval captures the last grid point
+        if i == N - 1:
+            end_idx = len(grid) - 1
+        
         intervals.append((grid[start_idx], grid[end_idx]))
     
     return intervals
@@ -149,7 +152,7 @@ for i in range(N ):
 	gridi.append(linspace(intervals[i, 0 ], intervals[i, 1 ], nelements+1))
 
 gridi = array(gridi)
-print(gridi)
+
 
 #----------------------
 #..... Initialisation

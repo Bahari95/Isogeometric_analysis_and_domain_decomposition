@@ -27,7 +27,7 @@ from   matplotlib.ticker            import LinearLocator, FormatStrFormatter
 from   scipy.sparse                 import kron
 from   scipy.sparse                 import csr_matrix
 from   scipy.sparse                 import csc_matrix, linalg as sla
-from   numpy                        import zeros, linalg, asarray, linspace
+from   numpy                        import zeros, linalg, asarray, linspace, array
 from   numpy                        import cos, sin, pi, exp, sqrt, arctan2
 from   tabulate                     import tabulate
 import numpy                        as     np
@@ -106,52 +106,54 @@ class DDM_poisson(object):
 degree      = 6
 nelements   = 16
 
-
 grid = linspace(0., 1., nelements+1)
 
 import numpy as np
 
-def split_interval_from_grid(grid, N, r):
-    """
-    Split a predefined grid into N overlapping sub-intervals, where r is the number of shared points.
-    
-    Parameters:
-    grid (list or numpy array): Predefined grid points
-    N (int): Number of sub-intervals
-    r (int): Number of overlapping points
-    
-    Returns:
-    list: List of tuples representing the overlapping sub-intervals
-    """
-    if len(grid) < 2 or N < 1 or r < 0:
-        raise ValueError("Grid must have at least 2 points, N must be at least 1, and r must be non-negative.")
-    
-    m = (len(grid) - r) // N  # Effective size of each sub-interval excluding overlap
-    if m < 1:
-        raise ValueError("Too many sub-intervals or too much overlap for given grid size.")
-    
-    intervals = []
-    for i in range(N):
-        start_idx = i * m
-        end_idx = start_idx + m + r - 1  # Include overlap
-        if end_idx >= len(grid):
-            end_idx = len(grid) - 1  # Ensure we don't exceed grid size
-        intervals.append((grid[start_idx], grid[end_idx]))
-    
-    return intervals
 
-# Example usage:
-	
-N = 3  # Number of sub-intervals
-r = 2  # Overlap elements
-intervals = asarray(split_interval_from_grid(grid, N, r))
+def split_grid(X, N, r):
+    """
+    Split a grid X into N overlapping subgrids with exactly r shared elements.
+
+    Parameters:
+    X (numpy array or list): The grid points.
+    N (int): Number of subgrids.
+    r (int): Number of shared elements between consecutive subgrids.
+
+    Returns:
+    list: A list of sub-intervals (each as a tuple of start and end points).
+    """
+    p = len(X) // N  # Compute the approximate subgrid size
+    grid_size = len(X)
+    L = []
+
+    L.append((X[0], X[p + r]))  # First subgrid
+
+    for i in range(1, N - 1):
+        L.append((X[p * i - r], X[(i + 1) * p + r]))  # Middle subgrids
+
+    L.append((X[(N - 1) * p - r], X[-1]))  # Last subgrid including the last element
+
+    return L
+
+
+
+N = 7	   # Number of subgrids
+r = 1   # Shared elements
+
+subgrids = array(split_grid(grid, N, r))
+
+print(subgrids)
+print(grid)
+#print(subgrids)
+
 
 # cearte your grids
 gridi = []
 for i in range(N ):
-	gridi.append(linspace(intervals[i, 0 ], intervals[i, 1 ], nelements+1))
+	gridi.append(linspace(subgrids[i, 0 ], subgrids[i, 1 ], nelements+1))
 
-gridi = asarray(gridi)
+gridi = array(gridi)
 
 
 #----------------------
@@ -162,14 +164,14 @@ sp = []
 for i in range(N ):
 	sp.append(SplineSpace(degree=degree, nelements= nelements, grid =gridi[i]))
 
-sp = asarray(sp)
+sp = array(sp)
 
 spt = []
 spt.append(TensorSpace(sp[0], sp[1], sp[2]))
 for i in range(1, N-1 ):
 	spt.append(TensorSpace(sp[i], sp[i-1], sp[i+1]))
 spt.append(TensorSpace(sp[N-1], sp[N-2], sp[N-3]))
-spt = asarray(spt)
+spt = array(spt)
 
 
 uh0 = []
@@ -179,36 +181,37 @@ for i in range(N):
 lists = [[] for _ in range(N)]
 listsL2_norm = []
 listsH1_norm = []
-S_DDM = 1/0.3#1/gridi[0][-1]
-
-iter_max = 2*N # must be converge at N iteration theorem  by Ferderic Nataf
+L_DDM = []
+# TODO
+# TODO find optimal parameter over single multipatch
+# TODO  if have N chain decomposition the algorithm must be converge at N iteration theorem  by Ferderic Nataf
+L_DDM.append(1./(1-gridi[0][-1]))
+for i in range(1, N-1):
+	L_DDM.append(1./(1.-gridi[i][-1]))
+L_DDM.append(1./(1-gridi[N-1][0]))
+iter_max = 30 # must be converge at N iteration theorem  by Ferderic Nataf
 
 DDM = [] 
 #... Initialization of Poissson DDM solver
-DDM.append(DDM_poisson( sp[0], spt[0],  S_DDM, 0 , ovlp_value_left = gridi[0][-1] , ovlp_value_right = gridi[0][r]))
+DDM.append(DDM_poisson( sp[0], spt[0],  L_DDM[0], 0 , ovlp_value_left = gridi[0][-1] , ovlp_value_right = gridi[0][r]))
 for i in range(1,N-1):
-	DDM.append(DDM_poisson( sp[i], spt[i],  S_DDM, 2 , ovlp_value_left = gridi[i][0] , ovlp_value_right = gridi[i][-1]))
+	DDM.append(DDM_poisson( sp[i], spt[i],  L_DDM[i], 2 , ovlp_value_left = gridi[i][0] , ovlp_value_right = gridi[i][-1]))
 	
-DDM.append(DDM_poisson( sp[N-1], spt[N-1],  S_DDM, 1 , ovlp_value_left = gridi[N-1][0] , ovlp_value_right = 1.))
-DDM = asarray (DDM)
-
-l = []
-
+DDM.append(DDM_poisson( sp[N-1], spt[N-1],  L_DDM[N-1], 1 , ovlp_value_left = gridi[N-1][0] , ovlp_value_right = 1.))
+DDM = array (DDM)
+	
 u_0,   xuh, l2_norm, H1_norm     = DDM[0].solve(uh0[1], uh0[2])
 lists[0].append(xuh)
-l.append(u_0)
 listsL2_norm.append(l2_norm)
 listsH1_norm.append(H1_norm)
 #  domain 1 ( alpha_2 , alpha_3 )
 for i in range(1, N-1):
 	u_1, xuh_1, l2_norm1, H1_norm1   = DDM[i].solve(uh0[i-1], uh0[i+1])
 	lists[i].append(xuh_1)
-	l.append(u_1)
 	listsL2_norm.append(l2_norm1)
 	listsH1_norm.append(H1_norm1)
 #  domain 1 ( alpha_4 , 1. )
 u_2, xuh_2, l2_norm2, H1_norm2   = DDM[N-1].solve(uh0[N-2], uh0[N-3])
-l.append(u_2)
 lists[N-1].append(xuh_2)
 listsL2_norm.append(l2_norm2)
 listsH1_norm.append(H1_norm2)
@@ -218,18 +221,16 @@ for i in range(N):
 
 	l2_err+= listsL2_norm[i]**2 
 	H1_err+= listsH1_norm[i]**2
-print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
+print('-----> L^2-error ={} -----> H^1-error = {}'.format(sqrt(l2_err), sqrt(H1_err)))
 
 for  i in range(N):
-	uh0[i] =l[i] #.from_array(sp[i], lists[i][0]) 
+	uh0[i].from_array(sp[i], lists[i][0]) 
 for j in range(iter_max):
 	listsL2_norm = []
 	listsH1_norm = []
-	l = []
-
 	u_0,   xuh, l2_norm, H1_norm     = DDM[0].solve(uh0[1], uh0[2])
+	
 	lists[0].append(xuh)
-	l.append(u_0)
 	listsL2_norm.append(l2_norm)
 	listsH1_norm.append(H1_norm)
 	#  domain 1 ( alpha_2 , alpha_3 )
@@ -238,24 +239,23 @@ for j in range(iter_max):
 		lists[i].append(xuh_1)
 		listsL2_norm.append(l2_norm1)
 		listsH1_norm.append(H1_norm1)
-		l.append(u_1)
+	
 	#  domain 1 ( alpha_4 , 1. )
 	u_2, xuh_2, l2_norm2, H1_norm2   = DDM[N-1].solve(uh0[N-2], uh0[N-3])
 	lists[N-1].append(xuh_2)
 	listsL2_norm.append(l2_norm2)
 	listsH1_norm.append(H1_norm2)
-	l.append(u_2)
 	l2_err = 0.0
 	H1_err = 0.0
 	for i in range(N):
 
 		l2_err+= listsL2_norm[i]**2 
 		H1_err+= listsH1_norm[i]**2
-	print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
+	print('-----> L^2-error ={} -----> H^1-error = {}'.format(sqrt(l2_err), sqrt(H1_err)))
 
 	for  i in range(N):
 		
-		uh0[i]= l[i]#.from_array(sp[i], lists[i][j+1]) 
+		uh0[i].from_array(sp[i], lists[i][j+1]) 
 
 #---Compute a solution
 from simplines import plot_field_1d
@@ -280,6 +280,6 @@ if True :
 		
 		plt.savefig('DDMp_sol_evol12.png')
 	plt.show()
-
+	
 	
 
