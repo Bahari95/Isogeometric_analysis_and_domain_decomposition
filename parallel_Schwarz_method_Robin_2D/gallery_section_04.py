@@ -412,6 +412,8 @@ def assemble_vector_un_ex01(ne1, ne2, ne3, ne4,
                     u    = 0.
                     ux   = 0.
                     uy   = 0.
+                    x    = 0.
+                    y    = 0.
                     F1y  = 0.
                     F2y  = 0.
                     F1x  = 0.
@@ -426,6 +428,8 @@ def assemble_vector_un_ex01(ne1, ne2, ne3, ne4,
                             coeff_m1   = lcoeffs_m1[il_1, il_2]
                             coeff_m2   = lcoeffs_m2[il_1, il_2]
 
+                            x         +=  coeff_m1 * bi_0
+                            y         +=  coeff_m2 * bi_0
                             F1y       +=  coeff_m1 * bi_y
                             F2y       +=  coeff_m2 * bi_y
                             F1x       +=  coeff_m1 * bi_x
@@ -456,141 +460,7 @@ def assemble_vector_un_ex01(ne1, ne2, ne3, ne4,
                        v       += bi_0 * (lvalues_ux[g2]+S_DDM * lvalues_u2[g2]) * wsurf
                       
                  rhs[i1_ovrlp,i2+p2] += v
-'''
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
-    # Assembles Neumann Condition
-    if domain_nb == 0 :
-        # ...
-        ie1       = 0
-        i_span_3  = spans_3[ie1]
-        for ie2 in range(0, ne2):
-           i_span_2 = spans_2[ie2]
-           
-           for g2 in range(0, k2):               
-                    #... here we use the information from the second domain
-                    lcoeffs_m1[ : , : ] = vector_m3[i_span_3 : i_span_3+p3+1, i_span_2 : i_span_2+p2+1]
-                    lcoeffs_m2[ : , : ] = vector_m4[i_span_3 : i_span_3+p3+1, i_span_2 : i_span_2+p2+1]
-                    #... correspond to the solution of the second domain
-                    lcoeffs_di[ : , : ] = vector_np[i_span_3 : i_span_3+p3+1, i_span_2 : i_span_2+p2+1]
-                    # ...
-                    u    = 0.
-                    ux   = 0.
-                    uy   = 0.
-                    F1y  = 0.
-                    F2y  = 0.
-                    F1x  = 0.
-                    F2x  = 0.
-                    for jl_2 in range(0, p4+1):
-                        bi_0       = basis_4[ie2, jl_2, 0, g2]
-                        bi_y       = basis_4[ie2, jl_2, 1, g2]
-                        # ...
-                        coeff_m1   = lcoeffs_m1[0, jl_2]
-                        coeff_m2   = lcoeffs_m2[0, jl_2]
-                        coeff_m3   = lcoeffs_m1[1, jl_2]
-                        coeff_m4   = lcoeffs_m2[1, jl_2]
-
-                        F1y       +=  coeff_m1 * bi_y
-                        F2y       +=  coeff_m2 * bi_y
-                        F1x       +=  (coeff_m3-coeff_m1) * bi_0 * p3 / (knots_3[2*p3+2]-knots_3[2*p3+1])
-                        F2x       +=  (coeff_m4-coeff_m2) * bi_0 * p3 / (knots_3[2*p3+2]-knots_3[2*p3+1])
-
-                        coeff_d   = lcoeffs_di[0, jl_2]
-                        coeff_d2  = lcoeffs_di[1, jl_2]
-                        # ...
-                        u        +=  coeff_d*bi_0
-                        ux       +=  (coeff_d2-coeff_d)*bi_0 * p3 / (knots_3[2*p3+2]-knots_3[2*p3+1])
-                        uy       +=  coeff_d*bi_y
-                    # ....
-                    det_Hess = abs(F1x*F2y-F1y*F2x)
-                    # ....
-                    #comp_1         = ( F2y*ux - F2x*uy)/det_Hess * F2y #/sqrt(F1y**2+ F2y**2)
-                    #comp_2         = -1.*(-F1y*ux + F1x*uy)/det_Hess * F1y #/sqrt(F1y**2+ F2y**2)
-                    #.. test unit-square
-                    comp_1         = ux #* F2y #/sqrt(F1y**2+ F2y**2)
-                    comp_2         = -0*uy# * F1y #/sqrt(F1y**2+ F2y**2)
-                    # ...
-                    lvalues_u2[g2]  = u #* sqrt(F1y**2+ F2y**2)
-                    lvalues_ux[g2] = -(comp_1 + comp_2) #* sqrt(F1y**2+ F2y**2)
-                                                
-           for il_2 in range(0, p2+1):
-                i2 = i_span_2 - p2 + il_2
-
-                v = 0.0
-                for g2 in range(0, k2):
-                    bi_0     =  basis_2[ie2, il_2, 0, g2]
-                    wsurf    =  weights_2[ie2, g2]
-                
-                    #.. 
-                    v       += bi_0 * (lvalues_ux[g2]+S_DDM * lvalues_u2[g2]) * wsurf
-                    
-                rhs[ne1+2*p1-1,i2+p2] += v
-    else :
-        
-        ie1      = ne1 -1
-        i_span_3  = spans_3[ie1]
-        for ie2 in range(0, ne2):
-           i_span_2 = spans_2[ie2]
-           
-           for g2 in range(0, k2):               
-                    #... here we use the information from the second domain
-                    lcoeffs_m1[ : , : ] = vector_m3[i_span_3 : i_span_3+p3+1, i_span_2 : i_span_2+p2+1]
-                    lcoeffs_m2[ : , : ] = vector_m4[i_span_3 : i_span_3+p3+1, i_span_2 : i_span_2+p2+1]
-                    #... correspond to the solution of the second domain
-                    lcoeffs_di[ : , : ] = vector_np[i_span_3 : i_span_3+p3+1, i_span_2 : i_span_2+p2+1]
-                    # ...
-                    u    = 0.
-                    ux   = 0.
-                    uy   = 0.
-                    F1y  = 0.
-                    F2y  = 0.
-                    F1x  = 0.
-                    F2x  = 0.
-                    for jl_2 in range(0, p4+1):
-                        bi_0       = basis_4[ie2, jl_2, 0, g2]
-                        bi_y       = basis_4[ie2, jl_2, 1, g2]
-                        # ...
-                        coeff_m1   = lcoeffs_m1[p3, jl_2]
-                        coeff_m2   = lcoeffs_m2[p3, jl_2]
-                        coeff_m3   = lcoeffs_m1[p3-1, jl_2]
-                        coeff_m4   = lcoeffs_m2[p3-1, jl_2]
-
-                        F1y       +=  coeff_m1 * bi_y
-                        F2y       +=  coeff_m2 * bi_y
-                        F1x       +=  (coeff_m1-coeff_m3) * bi_0 * p3 / (knots_3[2*p3+2]-knots_3[2*p3+1])
-                        F2x       +=  (coeff_m2-coeff_m4) * bi_0 * p3 / (knots_3[2*p3+2]-knots_3[2*p3+1])
-
-                        coeff_d   = lcoeffs_di[p3, jl_2]
-                        coeff_d2  = lcoeffs_di[p3-1, jl_2]
-                        # ...
-                        u        +=  coeff_d*bi_0
-                        ux       +=  (coeff_d-coeff_d2)*bi_0 * p3 / (knots_3[2*p3+2]-knots_3[2*p3+1])
-                        uy       +=  coeff_d*bi_y
-                    # ....
-                    det_Hess = abs(F1x*F2y-F1y*F2x)
-                    # ....
-                    #comp_1         = -1*( F2y*ux - F2x*uy)/det_Hess * F2y #/sqrt(F1y**2+ F2y**2)
-                    #comp_2         = (-F1y*ux + F1x*uy)/det_Hess * F1y #/sqrt(F1y**2+ F2y**2)
-                    #.. test unit-square
-                    comp_1         = -1*ux #* F2y #/sqrt(F1y**2+ F2y**2)
-                    comp_2         = 0.*uy #* F1y #/sqrt(F1y**2+ F2y**2)
-                    # ...
-                    lvalues_u2[g2] = u #* sqrt(F1y**2+ F2y**2)
-                    lvalues_ux[g2] = -(comp_1 + comp_2) #* sqrt(F1y**2+ F2y**2)
-                                                
-           for il_2 in range(0, p2+1):
-                i2 = i_span_2 - p2 + il_2
-
-                v = 0.0
-                for g2 in range(0, k2):
-                    bi_0     =  basis_2[ie2, il_2, 0, g2]
-                    wsurf    =  weights_2[ie2, g2]
-                
-                    #.. 
-                    v       += bi_0 * (lvalues_ux[g2]+S_DDM * lvalues_u2[g2]) * wsurf
-                    
-                rhs[p1,i2+p2] += v
-    # ...
-'''
+    #...
 #=================================================================================
 # norm in uniform mesh norm
 @types('int', 'int', 'int', 'int', 'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]',  'double[:,:]',  'double[:,:]')

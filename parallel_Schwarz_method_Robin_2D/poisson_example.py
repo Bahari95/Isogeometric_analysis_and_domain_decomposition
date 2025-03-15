@@ -102,57 +102,49 @@ nelements   = 128 # please take it as factor of 16
 # #// C^1 dans les bases bF1(n-1) et bF1(n) = bF2(0) et bF2(1) sont les memes
 # F2 [0,1]x[0,1] -> [0,1]x[0.5,1]
 # create the spline space for each direction
-VH1       = SplineSpace(degree=degree, nelements=16)
-VH1       = TensorSpace(VH1, VH1)# before refinement
 
 Vh1       = SplineSpace(degree=degree, nelements=nelements)
 Vh1       = TensorSpace(Vh1, Vh1)# after refinement
 #----------------------------------------
 #..... Parameterization from 16*16 elements
 #----------------------------------------
-# ... Circle :  patch 1
-
-
-#geometry  = '../parallel_Schwarz_method_Robin_2D/annuls1.xml'
-#geometry = '../parallel_Schwarz_method_Robin_2D/circle_ove1.xml'
-
-
-geometry  = '../parallel_Schwarz_method_Robin_2D/Annalus1.xml'
+# Quart annulus
+geometry  = '../parallel_Schwarz_method_Robin_2D/quart_annulus.xml'
+# Half annulus
+#geometry  = '../parallel_Schwarz_method_Robin_2D/half_annulus.xml'
+# Circle
+#geometry = '../parallel_Schwarz_method_Robin_2D/circle.xml'
+# ... Overlape ??
 #geometry  = '../parallel_Schwarz_method_Robin_2D/Annulus_over1.xml'
 
 print('#---IN-UNIFORM--MESH-Poisson equation patch 1', geometry)
 
-
 #Annuls : patch 1
-
-
 # ... Assembling mapping
 mp1       = getGeometryMap(geometry,0)
-xmp1      = zeros(VH1.nbasis)
-ymp1      = zeros(VH1.nbasis)
+xmp1      = zeros(mp1.nbasis)
+ymp1      = zeros(mp1.nbasis)
 
 xmp1[:,:], ymp1[:,:] =  mp1.coefs()
 
-#geometry = '../parallel_Schwarz_method_Robin_2D/circle2.xml'
-#geometry = '../parallel_Schwarz_method_Robin_2D/circle_ove2.xml'
-
-geometry = '../parallel_Schwarz_method_Robin_2D/Annalus2.xml'
-#geometry  = '../parallel_Schwarz_method_Robin_2D/Annulus_over2.xml'
-print('#---IN-UNIFORM--MESH-Poisson equation patch 2', geometry)
-
-
 # ... Assembling mapping
-mp2             = getGeometryMap(geometry,0) # second part
-xmp2 = zeros(VH1.nbasis)
-ymp2 = zeros(VH1.nbasis)
+mp2             = getGeometryMap(geometry,1) # second part
+xmp2 = zeros(mp2.nbasis)
+ymp2 = zeros(mp2.nbasis)
 
 xmp2[:,:], ymp2[:,:] =  mp2.coefs()
-xmp2[0,:] = xmp1[-1,:] 
-ymp2[0,:] = ymp1[-1,:]
+
+#..-------------- for C0 We take F1 = F1
 # ... C1 continuity garad(F1 = F2)  = garad(F2)  interface
-#xmp2[1,:] = 2.*xmp1[-1,:] - xmp1[-2,:]
-#ymp2[1,:] = 2.*ymp1[-1,:] - ymp1[-2,:] 
+xmp2[0,:] = xmp1[-1,:] #C0
+ymp2[0,:] = ymp1[-1,:] #C0
+#xmp2[1,:] = 2.*xmp1[-1,:] - xmp1[-2,:] #C1
+#ymp2[1,:] = 2.*ymp1[-1,:] - ymp1[-2,:]  #C1
+
 #... Prolongation by knot insertion
+VH1       = SplineSpace(degree=degree, nelements=mp1.nbasis[0]-mp1.degree[0])
+VH1       = TensorSpace(VH1, VH1)# before refinement
+
 M_mp      = prolongation_matrix(VH1, Vh1)
 
 xmp1      = (M_mp.dot(xmp1.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nbasis)
@@ -189,40 +181,6 @@ plt.plot(phidx, phidy, 'r',  linewidth=2., label = 'patch 2 $Im([0,1]^2_{x=0})$'
 phidx = xmp1[Vh1.nbasis[1]-1,:]
 phidy = ymp1[Vh1.nbasis[1]-1,:]
 plt.plot(phidx, phidy, 'g', linewidth= 2., label = 'patch 2 $Im([0,1]^2_{x=1}$)')
-
-
-
-'''
-num_points = 100
-
-# Generate (x, y) values in the unit square (0,1) x (0,1)
-x_vals = np.linspace(0, 1, num_points)
-y_vals = np.linspace(0, 1, num_points)
-X_grid, Y_grid = np.meshgrid(x_vals, y_vals)
-f1 = lambda x,y : (x*0.5+1)*cos(pi/2 * (y))
-f2 = lambda x,y : (x*.5+1)*sin(pi/2 * (y))
-# Apply transformation
-X_transformed = f1(X_grid,Y_grid )
-Y_transformed = f2(X_grid,Y_grid )
-
-
-# Plot the transformed points
-plt.figure(figsize=(6, 6))
-
-
-for i in range(num_points):
-   phidx = X_transformed[:,i]
-   phidy = Y_transformed[:,i]
-
-   plt.plot(phidx, phidy, '-b', linewidth = .3)
-for i in range(num_points):
-   phidx = X_transformed[i,:]
-   phidy = Y_transformed[i,:]
-   plt.plot(phidx, phidy, '-b', linewidth = .3)
-
-plt.show()
-
-''' 
    
 for i in range(Vh1.nbasis[1]):
    phidx = xmp2[:,i]
