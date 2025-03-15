@@ -79,7 +79,10 @@ class DDM_poisson(object):
        if self.domain_nb == 0 :
           b                   = b[1:]      
        elif self.domain_nb == 1:
-          b                   = b[:-1] 
+          b                   = b[:-1]
+       else:
+          b                   = b[:]
+       
        
        xkron               = self.lu.solve(b)       
        # ...
@@ -104,19 +107,22 @@ class DDM_poisson(object):
 
 
 
-degree      = 6
-nelements   = 32
+degree      = 2
+nelements   = 16
  
-alpha_1       = 0.3#0.4
-alpha_2        = 0.3
-alpha_3       = 0.7
-alpha_4        = 0.7
+alpha_1       = 0.25#0.4
+alpha_2        = 0.25
+alpha_3       = 0.5
+alpha_4        = 0.5	
+alpha_5        = 0.75
+alpha_6        = 0.75 
 #overlap     = alpha - beta
 xuh_0    = []
 xuh_01   = []
 xuh_02   = []
-iter_max = 10
-S_DDM       = 1./(alpha_1)
+xuh_03   = []
+iter_max = 111
+S_DDM       = 1./(1-alpha_1)
 
 #----------------------
 #..... Initialisation
@@ -129,56 +135,79 @@ grids_1 = linspace(alpha_2, alpha_3, nelements+1)
 # create the spline space for each direction
 V_1     = SplineSpace(degree=degree, nelements= nelements, grid =grids_1)
 
-grids_2 = linspace(alpha_4, 1., nelements+1)
+grids_2 = linspace(alpha_4,alpha_5 , nelements+1)
 # create the spline space for each direction
 V_2     = SplineSpace(degree=degree, nelements= nelements, grid =grids_2)
+
+grids_3 = linspace(alpha_6, 1. , nelements+1)
+# create the spline space for each direction
+V_3     = SplineSpace(degree=degree, nelements= nelements, grid =grids_3)
 #..... Initialisation
 #--------------------------
 
 Vt_0    = TensorSpace(V_0, V_1, V_2)
 Vt_1    = TensorSpace(V_1, V_0, V_2)
-Vt_2    = TensorSpace(V_2, V_1, V_0 )
+Vt_2    = TensorSpace(V_2, V_1, V_3) 
+Vt_3    = TensorSpace(V_3, V_2, V_1 )
 
 DDM_0   = DDM_poisson( V_0, Vt_0,  S_DDM, 0, ovlp_value_left = alpha_1 , ovlp_value_right = 0.)
 DDM_1   = DDM_poisson( V_1, Vt_1,  S_DDM, 2, ovlp_value_left = alpha_2, ovlp_value_right = alpha_3 )
-DDM_2   = DDM_poisson( V_2, Vt_2,  S_DDM, 1, ovlp_value_left = alpha_4 ,  ovlp_value_right = 1.)
+DDM_2   = DDM_poisson( V_2, Vt_2,  S_DDM, 2, ovlp_value_left = alpha_4 ,  ovlp_value_right = alpha_5)
+DDM_3   = DDM_poisson( V_3, Vt_3,  S_DDM, 1, ovlp_value_left = alpha_6 ,  ovlp_value_right = 1.)
 
 # ... communication Dirichlet interface
 u_0     = StencilVector(V_0.vector_space)
 u_1     = StencilVector(V_1.vector_space)
 u_2     = StencilVector(V_2.vector_space)
+u_3     = StencilVector(V_3.vector_space)
 
 u_00     = StencilVector(V_0.vector_space)
 u_11     = StencilVector(V_1.vector_space)
-u_22     = StencilVector(V_1.vector_space)
+u_22     = StencilVector(V_2.vector_space)
+u_33     = StencilVector(V_3.vector_space)
 print('#---IN-UNIFORM--MESH')
-u_0,   xuh, l2_norm, H1_norm     = DDM_0.solve( u_1 , u_2 )
+u_0,   xuh, l2_norm, H1_norm     = DDM_0.solve( u_11 , u_22 )
 xuh_0.append(xuh)
 
-u_1, xuh_1, l2_norm1, H1_norm1   = DDM_1.solve( u_00, u_2)
+u_1, xuh_1, l2_norm1, H1_norm1   = DDM_1.solve( u_00, u_22)
 xuh_01.append(xuh_1)
-u_2, xuh_2, l2_norm2, H1_norm2    = DDM_2.solve( u_11, u_00)
+
+u_2, xuh_2, l2_norm2, H1_norm2    = DDM_2.solve( u_11, u_33)
 xuh_02.append(xuh_2)
+
+u_3, xuh_3, l2_norm3, H1_norm3    = DDM_3.solve( u_22, u_11)
+xuh_03.append(xuh_3)
+
 u_00 = u_0
 u_11 = u_1
-l2_err = l2_norm + l2_norm1 + l2_norm2
-H1_err = H1_norm + H1_norm1 + H1_norm2
+u_22 = u_2
+u_33 = u_3
+l2_err = sqrt(l2_norm**2 + l2_norm1**2 + l2_norm2**2 +l2_norm3**2)
+H1_err = sqrt(H1_norm**2+ H1_norm1**2 + H1_norm2**2 +H1_norm3**2)
 print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
-plot_field_1d(V_0.knots, V_0.degree, xuh, nx=101, color='b')
-plot_field_1d(V_2.knots, V_2.degree, xuh_2, nx=101, color='r')
-plot_field_1d(V_1.knots, V_1.degree, xuh_1, nx=101, color='p')
+
+
 plt.show()
 for i in range(iter_max):
 	u_0,   xuh, l2_norm, H1_norm     = DDM_0.solve( u_1 , u_2 )
+	u_0,   xuh, l2_norm, H1_norm     = DDM_0.solve( u_11 , u_22 )
 	xuh_0.append(xuh)
-	u_1, xuh_1, l2_norm1, H1_norm1   = DDM_1.solve( u_00, u_2)
+
+	u_1, xuh_1, l2_norm1, H1_norm1   = DDM_1.solve( u_00, u_22)
 	xuh_01.append(xuh_1)
-	u_2, xuh_2, l2_norm2, H1_norm2    = DDM_2.solve( u_11, u_00)
+
+	u_2, xuh_2, l2_norm2, H1_norm2    = DDM_2.solve( u_11, u_33)
 	xuh_02.append(xuh_2)
+
+	u_3, xuh_3, l2_norm3, H1_norm3    = DDM_3.solve( u_22, u_11)
+	xuh_03.append(xuh_3)
+
 	u_00 = u_0
 	u_11 = u_1
-	l2_err = l2_norm + l2_norm1 + l2_norm2
-	H1_err = H1_norm + H1_norm1 + H1_norm2
+	u_22 = u_2
+	u_33 = u_3
+	l2_err = sqrt(l2_norm**2 + l2_norm1**2 + l2_norm2**2 +l2_norm3**2)
+	H1_err = sqrt(H1_norm**2+ H1_norm1**2 + H1_norm2**2 +H1_norm3**2)
 	print('-----> L^2-error ={} -----> H^1-error = {}'.format(l2_err, H1_err))
 
 #---Compute a solution
@@ -188,6 +217,7 @@ nbpts = 100
 plt.figure()
 plot_field_1d(V_0.knots, V_0.degree, xuh, nx=101, color='b')
 plot_field_1d(V_2.knots, V_2.degree, xuh_2, nx=101, color='r')
+plot_field_1d(V_3.knots, V_3.degree, xuh_3, nx=101, color='m')
 plot_field_1d(V_1.knots, V_1.degree, xuh_1, nx=101, color='p')
 plt.show()
 
@@ -199,6 +229,7 @@ if True :
 	for i in range(iter_max):
 		plot_field_1d(V_0.knots, V_0.degree, xuh_0[i],  nx=101, color='b')
 		plot_field_1d(V_2.knots, V_2.degree, xuh_02[i], nx=101, color='p')
+		plot_field_1d(V_3.knots, V_3.degree, xuh_03[i], nx=101, color='m')
 		plot_field_1d(V_1.knots, V_1.degree, xuh_01[i], nx=101, color='r')
 		
 		plt.savefig('DDMp_sol_evol.png')

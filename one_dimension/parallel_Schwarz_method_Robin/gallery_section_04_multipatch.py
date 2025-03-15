@@ -38,7 +38,7 @@ def assemble_stiffnessmatrix1D(ne, degree, spans, basis, weights, points,  matri
 
 #==============================================================================Assemble rhs Poisson
 #---1 : In uniform mesh
-@types('int', 'int', 'int', 'int','int', 'int', 'int[:]', 'int[:]', 'int[:]', 'double[:,:,:,:]',  'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]','double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'real[:]', 'real[:]', 'real[:]', 'double[:]', 'double[:]', 'real', 'real', 'real', 'int', 'double[:]')
+@types('int', 'int', 'int', 'int','int', 'int', 'int[:]', 'int[:]', 'int[:]', 'double[:,:,:,:]',  'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]','double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'real[:]', 'real[:]', 'real[:]', 'double[:]', 'double[:]', 'float', 'float', 'float', 'int', 'double[:]')
 def assemble_vector_ex01(ne1, ne2, ne3, p1, p2, p3, spans_1, spans_2, spans_3,
 		         basis_1, basis_2, basis_3, weights_1, weights_2, weights_3, 
 		         points_1, points_2, points_3, knots_1, knots_2, knots_3,
@@ -220,6 +220,7 @@ def assemble_vector_ex01(ne1, ne2, ne3, p1, p2, p3, spans_1, spans_2, spans_3,
 		     	# ...
 	    rhs[i1_ovrlp] += neum_sign*ux+S_DDM*u  
 	    degree         = p3
+	   
 	    
 	    basis3         = zeros((nders+1, degree+1))
 	    xq = ovlp_value_right
@@ -285,7 +286,7 @@ def assemble_vector_ex01(ne1, ne2, ne3, p1, p2, p3, spans_1, spans_2, spans_3,
 	    ders[1,:] = ders[1,:] * r
 	    basis3[0,:] = ders[0,:]
 	    basis3[1,:] = ders[1,:]
-	    i1_ovrlp  = ne1+2*p1-1
+	    i1_ovrlp  =  ne1+2*p1-1
 	    neum_sign = 1.
 	    # ...
 	    lcoeffs_d2[:] = vector_d2[span : span+p3+1]
