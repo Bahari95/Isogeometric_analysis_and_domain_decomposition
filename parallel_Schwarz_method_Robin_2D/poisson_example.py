@@ -109,9 +109,9 @@ Vh1       = TensorSpace(Vh1, Vh1)# after refinement
 #..... Parameterization from 16*16 elements
 #----------------------------------------
 # Quart annulus
-geometry  = '../parallel_Schwarz_method_Robin_2D/quart_annulus.xml'
+#geometry  = '../parallel_Schwarz_method_Robin_2D/quart_annulus.xml'
 # Half annulus
-#geometry  = '../parallel_Schwarz_method_Robin_2D/half_annulus.xml'
+geometry  = '../parallel_Schwarz_method_Robin_2D/half_annulus.xml'
 # Circle
 #geometry = '../parallel_Schwarz_method_Robin_2D/circle.xml'
 # ... Overlape ??
