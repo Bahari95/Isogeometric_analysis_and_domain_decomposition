@@ -28,7 +28,7 @@ from   matplotlib.ticker            import LinearLocator, FormatStrFormatter
 from   scipy.sparse                 import kron
 from   scipy.sparse                 import csr_matrix
 from   scipy.sparse                 import csc_matrix, linalg as sla
-from   numpy                        import zeros, linalg, asarray, linspace
+from   numpy                        import zeros, linalg, asarray, linspace,dot
 from   numpy                        import cos, sin, pi, exp, sqrt, arctan2, cosh
 from   tabulate                     import tabulate
 import numpy                        as     np
@@ -51,6 +51,7 @@ class DDM_poisson(object):
 
 		# ...
 		M                     = stiffness.tosparse()
+		self.M                    = M
 		self.lu               = sla.splu(csc_matrix(M))
 		self.domain_nb        = domain_nb
 		self.S_DDM            = S_DDM
@@ -91,7 +92,8 @@ class DDM_poisson(object):
 		Norm                = assemble_norm_l2(V, fields=[self.u11_mpH, self.u12_mpH, u]) 
 		norm                = Norm.toarray()
 		l2_norm             = norm[0]
-		H1_norm             = norm[1]       
+		H1_norm             = norm[1]  
+		#res                 =  abs(dot(self.M.toarray()  , u)  -b)
 		return u, x, l2_norm, H1_norm
 
 degree      = 2
@@ -390,21 +392,21 @@ u_11     = StencilVector(V_1.vector_space)
 u_2     = StencilVector(V_2.vector_space)
 
 print('#---IN-UNIFORM--MESH')
-u_0,   xuh, l2_norm, H1_norm     = P0.solve(u_11, u_2)
+u_0,   xuh, l2_norm,   H1_norm   = P0.solve(u_11, u_2)
 xuh_0.append(xuh)
-u_1, xuh_1, l2_norm1, H1_norm1   = P1.solve(u_00, u_2)
+u_1, xuh_1, l2_norm1, H1_norm1  = P1.solve(u_00, u_2)
 xuh_01.append(xuh_1)
-u_2, xuh_2, l2_norm2, H1_norm2   = P2.solve(u_11, u_00)
+u_2, xuh_2, l2_norm2, H1_norm2 = P2.solve(u_11, u_00)
 xuh_02.append(xuh_2)
-l2_err = sqrt(l2_norm**2 + l2_norm1**2 +l2_norm2**2)
-H1_err = sqrt(H1_norm**2 + H1_norm1**2 + H1_norm2**2)
-r = abs(l2_norm -l2_norm1 -l2_norm2)
+l2_err = l2_norm +l2_norm1 + l2_norm2
+H1_err = H1_norm + H1_norm1 + H1_norm2
+r = abs(l2_norm-l2_norm1)
 u_00 = u_0
 u_11 = u_1
 print('Iteration {}-----> L^2-error ={} -----> H^1-error = {}-----> Residual =  {}'.format(0,f"{l2_err:.2e}",  f"{H1_err:.2e}", f"{r:.2e}" ))
 
 for i in range(iter_max):
-	u_0,   xuh, l2_norm, H1_norm     = P0.solve(u_11, u_2)
+	u_0,   xuh, l2_norm, H1_norm    = P0.solve(u_11, u_2)
 	xuh_0.append(xuh)
 	u_1, xuh_1, l2_norm1, H1_norm1   = P1.solve(u_00, u_2)
 	xuh_01.append(xuh_1)
@@ -416,9 +418,9 @@ for i in range(iter_max):
 		print('\t\t the tolerance', tol, 'is reached at the', iter_max,'th iteration')
 		print('---------------------------------------------------------------------------------------')
 		break
-	l2_err = sqrt(l2_norm**2 + l2_norm1**2 +l2_norm2**2)
-	H1_err = sqrt(H1_norm**2 + H1_norm1**2 + H1_norm2**2)
-	r = abs(l2_norm -l2_norm1 -l2_norm2)
+	l2_err = l2_norm + l2_norm1 +l2_norm2
+	H1_err = H1_norm + H1_norm1 + H1_norm2
+	r = abs(l2_norm-l2_norm1)
 	u_00 = u_0
 	u_11 = u_1
 	print('')
