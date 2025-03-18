@@ -143,7 +143,7 @@ def assemble_matrix_un_ex01(ne1, ne2,
                                     v    += S_DDM * bi_0 * bj_0 * wvol
 
                             matrix[i_span_1+p1, p2+i2, p1, p2+j2-i2]  += v
-    else :
+    elif domain_nb == 1 :
         #... Assemble the boundary condition for Roben (x=left)
         ie1      = 0
         i_span_1 = spans_1[ie1]
@@ -179,21 +179,109 @@ def assemble_matrix_un_ex01(ne1, ne2,
                         v    += S_DDM * bi_0 * bj_0 * wvol
 
                     matrix[p1, p2+i2, p1, p2+j2-i2]  += v
+    else:
+    	#... Assemble the boundary condition for Roben (x=left)
+        ie1      = 0
+        i_span_1 = spans_1[ie1]
+        for ie2 in range(0, ne2):
+            i_span_2 = spans_2[ie2]
+
+            lcoeffs_m1[ : , : ] = vector_m1[i_span_1 : i_span_1+p1+1, i_span_2 : i_span_2+p2+1]
+            lcoeffs_m2[ : , : ] = vector_m2[i_span_1 : i_span_1+p1+1, i_span_2 : i_span_2+p2+1]
+            for g2 in range(0, k2):
+
+                F1y = 0.0
+                F2y = 0.0
+                for il_2 in range(0, p2+1):
+
+                    bj_y     = basis_2[ie2,il_2,1,g2]
+                    coeff_m1 = lcoeffs_m1[0, il_2]
+                    coeff_m2 = lcoeffs_m2[0, il_2]
+
+                    F1y     +=  coeff_m1 * bj_y
+                    F2y     +=  coeff_m2 * bj_y
+
+                J_mat[0 ,g2] = sqrt(F1y**2 + F2y**2)
+            for il_2 in range(0, p2+1):
+                for jl_2 in range(0, p2+1):
+                    i2 = i_span_2 - p2 + il_2
+                    j2 = i_span_2 - p2 + jl_2
+                    v  = 0.0
+                    for g2 in range(0, k2):
+                        bi_0  = basis_2[ie2, il_2, 0, g2]
+                        bj_0  = basis_2[ie2, jl_2, 0, g2]
+                        wvol  = weights_2[ie2, g2] * J_mat[0, g2]
+
+                        v    += S_DDM * bi_0 * bj_0 * wvol
+
+                    matrix[p1, p2+i2, p1, p2+j2-i2]  += v
+        #... Assemble the boundary condition for Roben (x=right)
+        ie1      = ne1 -1
+        i_span_1 = spans_1[ie1]
+        for ie2 in range(0, ne2):         
+            i_span_2 = spans_2[ie2]
+            
+            lcoeffs_m1[ : , : ] = vector_m1[i_span_1 : i_span_1+p1+1, i_span_2 : i_span_2+p2+1]
+            lcoeffs_m2[ : , : ] = vector_m2[i_span_1 : i_span_1+p1+1, i_span_2 : i_span_2+p2+1]
+            for g2 in range(0, k2):
+
+                F1y = 0.0
+                F2y = 0.0
+                for il_2 in range(0, p2+1):
+
+                    bj_y     = basis_2[ie2,il_2,1,g2]
+
+                    coeff_m1 = lcoeffs_m1[p1, il_2]
+                    coeff_m2 = lcoeffs_m2[p1, il_2]                    
+
+                    F1y     +=  coeff_m1 * bj_y
+                    F2y     +=  coeff_m2 * bj_y
+
+                J_mat[0 ,g2] = sqrt(F1y**2 + F2y**2)
+
+            for il_2 in range(0, p2+1):
+                for jl_2 in range(0, p2+1):
+
+                            i2 = i_span_2 - p2 + il_2
+                            j2 = i_span_2 - p2 + jl_2
+
+                            v  = 0.0
+                            for g2 in range(0, k2):
+                                    bi_0  = basis_2[ie2, il_2, 0, g2]
+                                    bj_0  = basis_2[ie2, jl_2, 0, g2]
+
+                                    wvol  = weights_2[ie2, g2] * J_mat[0, g2]
+                                    # ...
+                                    v    += S_DDM * bi_0 * bj_0 * wvol
+
+                            matrix[i_span_1+p1, p2+i2, p1, p2+j2-i2]  += v
+             
     # ...
 
 #==============================================================================Assemble rhs Poisson
 ##---2 : rhs
-@types(	'int', 'int','int', 'int', 'int', 'int', 'int', 'int', 'int[:]',  'int[:]',  'int[:]', 'int[:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'float[:]', 'float[:]', 'float[:]', 'float[:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'int', 'float', 'float', 'double[:,:]')
-def assemble_vector_un_ex01(ne1, ne2, ne3, ne4,
-			    	p1, p2, p3, p4, 
-    			    spans_1, spans_2, spans_3, spans_4,
-    			    basis_1, basis_2, basis_3, basis_4,
-    			    weights_1, weights_2, weights_3, weights_4,
-    			    points_1, points_2, points_3, points_4,
-    			    knots_1, knots_2, knots_3, knots_4,
-    			    vector_m1, vector_m2, vector_d,
-                    vector_m3, vector_m4, vector_np,
-    			    domain_nb, S_DDM, ovlp_value, rhs):
+@types(	'int', 'int','int', 'int', 'int', 'int',
+	 'int', 'int', 'int', 'int', 'int', 'int',
+ 	'int[:]',  'int[:]',  'int[:]', 'int[:]', 'int[:]', 'int[:]',
+ 	'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 'double[:,:,:,:]', 
+ 	'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 
+ 	'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 'double[:,:]', 
+ 	 'float[:]', 'float[:]', 'float[:]', 'float[:]', 'float[:]', 'float[:]',
+ 	 'double[:,:]', 'double[:,:]', 'double[:,:]',
+ 	 'double[:,:]', 'double[:,:]', 'double[:,:]',
+ 	 'double[:,:]', 'double[:,:]', 'double[:,:]',
+ 	   'int', 'float', 'float', 'float', 'double[:,:]')
+def assemble_vector_un_ex01(ne1, ne2, ne3, ne4, ne5, ne6,
+			    									p1, p2, p3, p4, p5, p6,
+    			    							spans_1, spans_2, spans_3, spans_4, spans_5, spans_6,
+    			    							basis_1, basis_2, basis_3, basis_4, basis_5, basis_6,
+														weights_1, weights_2, weights_3, weights_4, weights_5, weights_6,
+														points_1, points_2, points_3, points_4, points_5, points_6,
+														knots_1, knots_2, knots_3, knots_4, knots_5, knots_6,
+														vector_m1, vector_m2, vector_d,
+                            vector_m3, vector_m4, vector_np1,
+                            vector_m5, vector_m6, vector_np2,
+    			    							domain_nb, S_DDM, ovlp_value_left, ovlp_value_right, rhs):
 
     from numpy import exp
     from numpy import empty
@@ -274,7 +362,7 @@ def assemble_vector_un_ex01(ne1, ne2, ne3, ne4,
                     lvalues_udy[g1, g2]  = (F1x * udy - F1y*udx)
                     lvalues_udy[g1, g2] /= J_mat
                     #.. Test 1
-                    #f = 2.*(2.*pi)**2*sin(2.*pi*x)*sin(2.*pi*y)
+                    f = 2.*(2.*pi)**2*sin(2.*pi*x)*sin(2.*pi*y)
                     # .. Test 2 Quart annnulus
                     #f =  -20.0*x*y*(800*x - 400.0)*sinh(-6.25*y**2 + 400*(x - 0.5)**2)/cosh(-6.25*y**2 + 400*(x - 0.5)**2)**2 - 1562.5*y**3*(-x**2 - y**2 + 1.0)*sinh(-6.25*y**2 + 400*(x - 0.5)**2)**2/cosh(-6.25*y**2 + 400*(x - 0.5)**2)**3 
                     #f += 781.25*y**3*(-x**2 - y**2 + 1.0)/cosh(-6.25*y**2 + 400*(x - 0.5)**2) + 250.0*y**3*sinh(-6.25*y**2 + 400*(x - 0.5)**2)/cosh(-6.25*y**2 + 400*(x - 0.5)**2)**2 - 6400000.0*y*(x - 0.5)**2*(-x**2 - y**2 + 1.0)*sinh(-6.25*y**2 + 400*(x - 0.5)**2)**2/cosh(-6.25*y**2 + 400*(x - 0.5)**2)**3 
@@ -319,7 +407,7 @@ def assemble_vector_un_ex01(ne1, ne2, ne3, ne4,
     #...
     basis3         = zeros((nders+1, degree+1))
     #span = find_span( knots, degree, xq )
-    xq = ovlp_value
+    xq = ovlp_value_left
     #~~~~~~~~~~~~~~~
     #span = find_span( knots, degree, xq )
     #~~~~~~~~~~~~~~~
@@ -374,8 +462,8 @@ def assemble_vector_un_ex01(ne1, ne2, ne3, ne4,
             for ij in range(j1,j2+1):
                 d += a[s2,ij]* ndu[rk+ij,pk]
             if r <= pk:
-                a[s2,k] = - a[s1,k-1] * ndu[pk+1,r]
-                d += a[s2,k] * ndu[r,pk]
+                 a[s2,k] = - a[s1,k-1] * ndu[pk+1,r]
+                 d += a[s2,k] * ndu[r,pk]
             ders[k,r] = d
             j  = s1
             s1 = s2
@@ -389,16 +477,12 @@ def assemble_vector_un_ex01(ne1, ne2, ne3, ne4,
     span_3    = span
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Assembles Neumann Condition
+    from numpy import sign 
     if domain_nb == 0 :
       i1_ovrlp   = ne1+2*p1-1
       neum_sign1      = -1.
       neum_sign2      =  1.
-    else :
-      i1_ovrlp   = p1
-      neum_sign1      =  1.
-      neum_sign2      = -1.
-    from numpy import sign                
-    for ie2 in range(0, ne2):
+      for ie2 in range(0, ne2):
            i_span_2 = spans_2[ie2]
            
            for g2 in range(0, k2):
@@ -407,7 +491,7 @@ def assemble_vector_un_ex01(ne1, ne2, ne3, ne4,
                     lcoeffs_m1[ : , : ] = vector_m3[span_3 : span_3+p3+1, i_span_2 : i_span_2+p2+1]
                     lcoeffs_m2[ : , : ] = vector_m4[span_3 : span_3+p3+1, i_span_2 : i_span_2+p2+1]
                     #... correspond to the solution of the second domain
-                    lcoeffs_di[ : , : ] = vector_np[span_3 : span_3+p3+1, i_span_2 : i_span_2+p2+1]
+                    lcoeffs_di[ : , : ] = vector_np1[span_3 : span_3+p3+1, i_span_2 : i_span_2+p2+1]
                      # ...
                     u    = 0.
                     ux   = 0.
@@ -424,6 +508,275 @@ def assemble_vector_un_ex01(ne1, ne2, ne3, ne4,
                             bi_x      = basis3[1,il_1] * basis_4[ie2, il_2, 0, g2]
                             bi_0      = basis3[0,il_1] * basis_4[ie2, il_2, 0, g2]
                             bi_y      = basis3[0,il_1] * basis_4[ie2, il_2, 1, g2]
+                            # ...
+                            coeff_m1   = lcoeffs_m1[il_1, il_2]
+                            coeff_m2   = lcoeffs_m2[il_1, il_2]
+
+                            x         +=  coeff_m1 * bi_0
+                            y         +=  coeff_m2 * bi_0
+                            F1y       +=  coeff_m1 * bi_y
+                            F2y       +=  coeff_m2 * bi_y
+                            F1x       +=  coeff_m1 * bi_x
+                            F2x       +=  coeff_m2 * bi_x
+
+                            coeff_d   = lcoeffs_di[il_1, il_2]
+                            # ...
+                            u        +=  coeff_d * bi_0
+                            ux       +=  coeff_d * bi_x
+                            uy       +=  coeff_d*bi_y
+                    # ....
+                    det_Hess        = abs(F1x*F2y-F1y*F2x)
+                    # ...
+                    comp_1          = neum_sign1 * ( F2y*ux - F2x*uy)/det_Hess * F2y #/sqrt(F1y**2+ F2y**2)
+                    comp_2          = neum_sign2 * (-F1y*ux + F1x*uy)/det_Hess * F1y #/sqrt(F1y**2+ F2y**2)
+                    # ...
+                    lvalues_u2[g2]  = u * sqrt(F1y**2+ F2y**2)
+                    lvalues_ux[g2]  = -(comp_1 + comp_2) #* sqrt(F1y**2+ F2y**2)
+                                                
+           for il_2 in range(0, p2+1):
+                 i2 = i_span_2 - p2 + il_2
+
+                 v = 0.0
+                 for g2 in range(0, k2):
+                       bi_0     =  basis_2[ie2, il_2, 0, g2]
+                       wsurf    =  weights_2[ie2, g2]
+                       #.. 
+                       v       += bi_0 * (lvalues_ux[g2]+S_DDM * lvalues_u2[g2]) * wsurf
+                      
+                 rhs[i1_ovrlp,i2+p2] += v
+    elif domain_nb == 1 :
+      i1_ovrlp   = p1
+      neum_sign1      =  1.
+      neum_sign2      = -1.
+      for ie2 in range(0, ne2):
+           i_span_2 = spans_2[ie2]
+           
+           for g2 in range(0, k2):
+                    # ...
+                    #... here we use the information from the second domain
+                    lcoeffs_m1[ : , : ] = vector_m3[span_3 : span_3+p3+1, i_span_2 : i_span_2+p2+1]
+                    lcoeffs_m2[ : , : ] = vector_m4[span_3 : span_3+p3+1, i_span_2 : i_span_2+p2+1]
+                    #... correspond to the solution of the second domain
+                    lcoeffs_di[ : , : ] = vector_np1[span_3 : span_3+p3+1, i_span_2 : i_span_2+p2+1]
+                     # ...
+                    u    = 0.
+                    ux   = 0.
+                    uy   = 0.
+                    x    = 0.
+                    y    = 0.
+                    F1y  = 0.
+                    F2y  = 0.
+                    F1x  = 0.
+                    F2x  = 0.
+                    for il_2 in range(0, p4+1):
+                        for il_1 in range(0, p3+1):
+                            # ... there is multiplication by zero that can be optimized
+                            bi_x      = basis3[1,il_1] * basis_4[ie2, il_2, 0, g2]
+                            bi_0      = basis3[0,il_1] * basis_4[ie2, il_2, 0, g2]
+                            bi_y      = basis3[0,il_1] * basis_4[ie2, il_2, 1, g2]
+                            # ...
+                            coeff_m1   = lcoeffs_m1[il_1, il_2]
+                            coeff_m2   = lcoeffs_m2[il_1, il_2]
+
+                            x         +=  coeff_m1 * bi_0
+                            y         +=  coeff_m2 * bi_0
+                            F1y       +=  coeff_m1 * bi_y
+                            F2y       +=  coeff_m2 * bi_y
+                            F1x       +=  coeff_m1 * bi_x
+                            F2x       +=  coeff_m2 * bi_x
+
+                            coeff_d   = lcoeffs_di[il_1, il_2]
+                            # ...
+                            u        +=  coeff_d * bi_0
+                            ux       +=  coeff_d * bi_x
+                            uy       +=  coeff_d*bi_y
+                    # ....
+                    det_Hess        = abs(F1x*F2y-F1y*F2x)
+                    # ...
+                    comp_1          = neum_sign1 * ( F2y*ux - F2x*uy)/det_Hess * F2y #/sqrt(F1y**2+ F2y**2)
+                    comp_2          = neum_sign2 * (-F1y*ux + F1x*uy)/det_Hess * F1y #/sqrt(F1y**2+ F2y**2)
+                    # ...
+                    lvalues_u2[g2]  = u * sqrt(F1y**2+ F2y**2)
+                    lvalues_ux[g2]  = -(comp_1 + comp_2) #* sqrt(F1y**2+ F2y**2)
+                                                
+           for il_2 in range(0, p2+1):
+                 i2 = i_span_2 - p2 + il_2
+
+                 v = 0.0
+                 for g2 in range(0, k2):
+                       bi_0     =  basis_2[ie2, il_2, 0, g2]
+                       wsurf    =  weights_2[ie2, g2]
+                       #.. 
+                       v       += bi_0 * (lvalues_ux[g2]+S_DDM * lvalues_u2[g2]) * wsurf
+                      
+                 rhs[i1_ovrlp,i2+p2] += v
+    else:
+      i1_ovrlp   = p1
+      neum_sign1      =  1.
+      neum_sign2      = -1.
+      for ie2 in range(0, ne2):
+           i_span_2 = spans_2[ie2]
+           
+           for g2 in range(0, k2):
+                    # ...
+                    #... here we use the information from the second domain
+                    lcoeffs_m1[ : , : ] = vector_m3[span_3 : span_3+p3+1, i_span_2 : i_span_2+p2+1]
+                    lcoeffs_m2[ : , : ] = vector_m4[span_3 : span_3+p3+1, i_span_2 : i_span_2+p2+1]
+                    #... correspond to the solution of the second domain
+                    lcoeffs_di[ : , : ] = vector_np1[span_3 : span_3+p3+1, i_span_2 : i_span_2+p2+1]
+                     # ...
+                    u    = 0.
+                    ux   = 0.
+                    uy   = 0.
+                    x    = 0.
+                    y    = 0.
+                    F1y  = 0.
+                    F2y  = 0.
+                    F1x  = 0.
+                    F2x  = 0.
+                    for il_2 in range(0, p4+1):
+                        for il_1 in range(0, p3+1):
+                            # ... there is multiplication by zero that can be optimized
+                            bi_x      = basis3[1,il_1] * basis_4[ie2, il_2, 0, g2]
+                            bi_0      = basis3[0,il_1] * basis_4[ie2, il_2, 0, g2]
+                            bi_y      = basis3[0,il_1] * basis_4[ie2, il_2, 1, g2]
+                            # ...
+                            coeff_m1   = lcoeffs_m1[il_1, il_2]
+                            coeff_m2   = lcoeffs_m2[il_1, il_2]
+
+                            x         +=  coeff_m1 * bi_0
+                            y         +=  coeff_m2 * bi_0
+                            F1y       +=  coeff_m1 * bi_y
+                            F2y       +=  coeff_m2 * bi_y
+                            F1x       +=  coeff_m1 * bi_x
+                            F2x       +=  coeff_m2 * bi_x
+
+                            coeff_d   = lcoeffs_di[il_1, il_2]
+                            # ...
+                            u        +=  coeff_d * bi_0
+                            ux       +=  coeff_d * bi_x
+                            uy       +=  coeff_d*bi_y
+                    # ....
+                    det_Hess        = abs(F1x*F2y-F1y*F2x)
+                    # ...
+                    comp_1          = neum_sign1 * ( F2y*ux - F2x*uy)/det_Hess * F2y #/sqrt(F1y**2+ F2y**2)
+                    comp_2          = neum_sign2 * (-F1y*ux + F1x*uy)/det_Hess * F1y #/sqrt(F1y**2+ F2y**2)
+                    # ...
+                    lvalues_u2[g2]  = u * sqrt(F1y**2+ F2y**2)
+                    lvalues_ux[g2]  = -(comp_1 + comp_2) #* sqrt(F1y**2+ F2y**2)
+                                                
+           for il_2 in range(0, p2+1):
+                 i2 = i_span_2 - p2 + il_2
+
+                 v = 0.0
+                 for g2 in range(0, k2):
+                       bi_0     =  basis_2[ie2, il_2, 0, g2]
+                       wsurf    =  weights_2[ie2, g2]
+                       #.. 
+                       v       += bi_0 * (lvalues_ux[g2]+S_DDM * lvalues_u2[g2]) * wsurf
+                      
+                 rhs[i1_ovrlp,i2+p2] += v             
+                 
+      i1_ovrlp   = ne1+2*p1-1
+      neum_sign1      = -1.
+      neum_sign2      =  1.
+      degree         = p5
+      basis4         = zeros((nders+1, degree+1))
+		  #span = find_span( knots, degree, xq )
+      xq = ovlp_value_right
+		  #~~~~~~~~~~~~~~~
+		  #span = find_span( knots, degree, xq )
+		  #~~~~~~~~~~~~~~~
+		  # Knot index at left/right boundary
+      low  = degree
+      high = len(knots_5)-1-degree
+		  # Check if point is exactly on left/right boundary, or outside domain
+      if xq <= knots_5[low ]:
+      		span = low
+      if xq >= knots_5[high]:
+      		span = high-1
+      else :
+		      # Perform binary search
+      		span = (low+high)//2
+      		while xq < knots_5[span] or xq >= knots_5[span+1]:
+      				if xq < knots_5[span]:
+      						high = span
+      				else:
+      						low  = span
+      				span = (low+high)//2
+      ndu[0,0] = 1.0
+      for j in range(0,degree):
+      		left [j] = xq - knots_5[span-j]
+      		right[j] = knots_5[span+1+j] - xq
+      		saved    = 0.0
+      		for r in range(0,j+1):
+      				# compute inverse of knot differences and save them into lower triangular part of ndu
+      				ndu[j+1,r] = 1.0 / (right[r] + left[j-r])
+      				# compute basis functions and save them into upper triangular part of ndu
+      				temp       = ndu[r,j] * ndu[j+1,r]
+      				ndu[r,j+1] = saved + right[r] * temp
+      				saved      = left[j-r] * temp
+      		ndu[j+1,j+1] = saved	
+
+		  # Compute derivatives in 2D output array 'ders'
+      ders[0,:] = ndu[:,degree]
+      for r in range(0,degree+1):
+		      s1 = 0
+		      s2 = 1
+		      a[0,0] = 1.0
+		      for k in range(1,nders+1):
+		          d  = 0.0
+		          rk = r-k
+		          pk = degree-k
+		          if r >= k:
+		              a[s2,0] = a[s1,0] * ndu[pk+1,rk]
+		              d = a[s2,0] * ndu[rk,pk]
+		          j1 = 1   if (rk  > -1 ) else -rk
+		          j2 = k-1 if (r-1 <= pk) else degree-r
+		          for ij in range(j1,j2+1):
+		              a[s2,ij] = (a[s1,ij] - a[s1,ij-1]) * ndu[pk+1,rk+ij]
+		          for ij in range(j1,j2+1):
+		              d += a[s2,ij]* ndu[rk+ij,pk]
+		          if r <= pk:
+		               a[s2,k] = - a[s1,k-1] * ndu[pk+1,r]
+		               d += a[s2,k] * ndu[r,pk]
+		          ders[k,r] = d
+		          j  = s1
+		          s1 = s2
+		          s2 = j
+		  # Multiply derivatives by correct factors
+      r = degree
+      ders[1,:] = ders[1,:] * r
+      basis4[0,:] = ders[0,:]
+      basis4[1,:] = ders[1,:]
+		  # ...
+      span_5    = span
+      for ie2 in range(0, ne2):
+           i_span_2 = spans_2[ie2]
+           
+           for g2 in range(0, k2):
+                    # ...
+                    #... here we use the information from the second domain
+                    lcoeffs_m1[ : , : ] = vector_m5[span_5 : span_5+p5+1, i_span_2 : i_span_2+p4+1]
+                    lcoeffs_m2[ : , : ] = vector_m6[span_5 : span_5+p5+1, i_span_2 : i_span_2+p4+1]
+                    #... correspond to the solution of the second domain
+                    lcoeffs_di[ : , : ] = vector_np2[span_5 : span_5+p5+1, i_span_2 : i_span_2+p4+1]
+                     # ...
+                    u    = 0.
+                    ux   = 0.
+                    uy   = 0.
+                    x    = 0.
+                    y    = 0.
+                    F1y  = 0.
+                    F2y  = 0.
+                    F1x  = 0.
+                    F2x  = 0.
+                    for il_2 in range(0, p6+1):
+                        for il_1 in range(0, p5+1):
+                            # ... there is multiplication by zero that can be optimized
+                            bi_x      = basis4[1,il_1] * basis_6[ie2, il_2, 0, g2]
+                            bi_0      = basis4[0,il_1] * basis_6[ie2, il_2, 0, g2]
+                            bi_y      = basis4[0,il_1] * basis_6[ie2, il_2, 1, g2]
                             # ...
                             coeff_m1   = lcoeffs_m1[il_1, il_2]
                             coeff_m2   = lcoeffs_m2[il_1, il_2]
