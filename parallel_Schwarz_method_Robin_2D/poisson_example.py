@@ -93,13 +93,13 @@ g        = ['sin(2.*pi*x)*sin(2.*pi*y)']
 #..... Parameterization from 16*16 elements
 #----------------------------------------
 # Quart annulus
-#geometry  = '../parallel_Schwarz_method_Robin_2D/quart_annulus.xml'
+#geometry  = '../fields/quart_annulus.xml'
 # Half annulus
-geometry  = '../parallel_Schwarz_method_Robin_2D/half_annulus.xml'
+geometry  = '../fields/annulus.xml'
 # Circle
-#geometry = '../parallel_Schwarz_method_Robin_2D/circle.xml'
+#geometry = '../fields/circle.xml'
 # ... Overlape ??
-#geometry  = '../parallel_Schwarz_method_Robin_2D/Annulus_over1.xml'
+#geometry  = '../fields/Annulus_over1.xml'
 
 print('#--- Poisson equation : ', geometry)
 
