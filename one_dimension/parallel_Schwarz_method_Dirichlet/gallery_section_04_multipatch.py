@@ -61,7 +61,7 @@ def assemble_vector_ex01(ne1, p1, spans_1,  basis_1,  weights_1, points_1, vecto
             for g1 in range(0, k1):
                     ux = 0.0
                     for il_1 in range(0, p1+1):
-
+	
                             bj_x    = basis_1[ie1,il_1,1,g1]
 
                             coeff_d = lcoeffs_d[il_1]
