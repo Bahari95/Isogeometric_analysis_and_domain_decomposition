@@ -35,6 +35,37 @@ import numpy                        as     np
 import timeit
 import time
 
+#---Plot the solution
+def plotddm_result(nbpts, xuh, V, xmp):
+    iter_max  = len(xuh[0])
+    numPaches = len(V) 
+    #---Compute a solution
+    F1 = []
+    for i in range(numPaches):
+        F1.append(pyccel_sol_field_2d((nbpts, nbpts), xmp[i], V[i].knots, V[i].degree)[0])
+        #F2   = pyccel_sol_field_2d((nbpts, nbpts), ymp[i], V[i].knots, V[i].degree)[0]
+    u = []
+    for ii in range(numPaches):
+        u1    = []
+        for i in range(iter_max):
+            u1.append(pyccel_sol_field_2d((nbpts, nbpts),  xuh[ii][i], V[ii].knots, V[ii].degree)[0][:,50])
+        u.append(u1)
+    plt.figure() 
+    plt.axes().set_aspect('equal')
+    plt.subplot(121)
+    for ii in range(numPaches):
+        for i in range(iter_max-1):
+            plt.plot(F1[ii][:,50], u[ii][i], '-k', linewidth = 1.)
+    for ii in range(numPaches):
+        plt.plot(F1[ii][:,50], u[ii][-1], '-k', linewidth = 1., label='u_{}'.format(ii))
+    plt.legend()
+    plt.grid(True)  
+    plt.subplot(122)
+    plt.plot(F1[ii][:,50], u[ii][-1],  '--or', label = '$Un_{}-iter-max'.format(ii))
+    plt.legend()
+    plt.grid(True)  
+    plt.savefig('behvoir_between_two_patches.png')
+    return 0
 #==============================================================================
 #.......Poisson ALGORITHM
 #==============================================================================
@@ -421,86 +452,6 @@ nbpts = 100
 # # ........................................................
 # ....................For a plot
 # #.........................................................
-if True :
-	# --- First Subdomain ---
-	#---Compute a solution
-	u, ux, uy, X, Y               = pyccel_sol_field_2d((nbpts, nbpts),  xuh,   V_0.knots, V_0.degree)
-	# ...
-	u_1, ux_1, uy_1, X_1, Y_1     = pyccel_sol_field_2d((nbpts, nbpts),  xuh_1,   V_1.knots, V_1.degree)
-	
-	u_2, ux_2, uy_2, X_2, Y_2     = pyccel_sol_field_2d((nbpts, nbpts),  xuh_2,   V_2.knots, V_2.degree)
-	u_0  = []
-	u_01 = []
-	u_02 = []
-	for i in range(iter_max):
-		u_0.append(pyccel_sol_field_2d((nbpts, nbpts),  xuh_0[i],   V_0.knots, V_0.degree)[0][:,50])
-		u_01.append(pyccel_sol_field_2d((nbpts, nbpts),  xuh_01[i],   V_1.knots, V_1.degree)[0][:,50])
-		u_02.append(pyccel_sol_field_2d((nbpts, nbpts),  xuh_02[i],   V_2.knots, V_2.degree)[0][:,50])
-	plt.figure() 
-	plt.axes().set_aspect('equal')
-	plt.subplot(121)
-	for i in range(iter_max-1):
-		plt.plot(X[:,50], u_0[i], '-k', linewidth = 1.)
-		plt.plot(X_1[:,50], u_01[i], '-k', linewidth = 1.)
-		plt.plot(X_2[:,50], u_02[i], '-k', linewidth = 1.)  
-	plt.plot(X[:,50], u_0[i+1], '-k', linewidth = 1., label='$\mathbf{Un_0-iter(i)}$')
-	plt.plot(X_1[:,50], u_01[i+1], '-k', linewidth = 1., label='$\mathbf{Un_1-iter(i)}$')
-	plt.plot(X_2[:,50], u_02[i+1], '-k', linewidth = 1., label='$\mathbf{Un_2-iter(i)}$')
-	plt.legend()
-	plt.grid(True)  
-	plt.subplot(122)
-	plt.plot(X[:,50], u[:,50],  '--or', label = '$\mathbf{Un_0-iter-max}$' )
-	plt.plot(X_1[:,50], u_1[:,50],  '--om', label = '$\mathbf{Un_1-iter-max}$')
-	plt.plot(X_2[:,50], u_2[:,50],  '--p', label = '$\mathbf{Un_2-iter-max}$')
-
-	plt.legend()
-	plt.grid(True)  
-	plt.savefig('behvoir_between_two_patches.png')
-	plt.show()
-
-	
-	u1, ux, uy, X, Y = pyccel_sol_field_2d((nbpts, nbpts), xuh, V_0.knots, V_0.degree)
-	F1_1 = pyccel_sol_field_2d((nbpts, nbpts), xmp1, V_0.knots, V_0.degree)[0]
-	F2_1 = pyccel_sol_field_2d((nbpts, nbpts), ymp1, V_0.knots, V_0.degree)[0]
-
-	# --- Second Subdomain ---
-	u2, ux, uy, X, Y = pyccel_sol_field_2d((nbpts, nbpts), xuh_1, V_1.knots, V_1.degree)
-	F1_2 = pyccel_sol_field_2d((nbpts, nbpts), xmp2, V_1.knots, V_1.degree)[0]
-	F2_2 = pyccel_sol_field_2d((nbpts, nbpts), ymp2, V_1.knots, V_1.degree)[0]
-	
-	u3, ux, uy, X, Y = pyccel_sol_field_2d((nbpts, nbpts), xuh_2, V_2.knots, V_2.degree)
-	F1_3 = pyccel_sol_field_2d((nbpts, nbpts), xmp3, V_2.knots, V_2.degree)[0]
-	F2_3 = pyccel_sol_field_2d((nbpts, nbpts), ymp3, V_2.knots, V_2.degree)[0]
-
-	# --- Compute Global Color Levels ---
-	u_min = min(np.min(u1), np.min(u2),  np.min(u3))
-	u_max = max(np.max(u1), np.max(u2), np.max(u3))
-	levels = np.linspace(u_min, u_max, 100)  # Uniform levels for both plots
-
-	# --- Create Figure ---
-	fig, axes = plt.subplots(figsize=(8, 6))
-
-	# --- Contour Plot for First Subdomain ---
-	im1 = axes.contourf(F1_1, F2_1, u1, levels, cmap='jet')
-
-	# --- Contour Plot for Second Subdomain ---
-	im2 = axes.contourf(F1_2, F2_2, u2, levels, cmap='jet')
-	
-	im3 = axes.contourf(F1_3, F2_3, u3, levels, cmap='jet')
-
-	# --- Colorbar ---
-	divider = make_axes_locatable(axes)
-	cax = divider.append_axes("right", size="5%", pad=0.05, aspect=40)
-	cbar = plt.colorbar(im3, cax=cax)
-	cbar.ax.tick_params(labelsize=15)
-	cbar.ax.yaxis.label.set_fontweight('bold')
-
-	# --- Formatting ---
-	axes.set_title("Solution the in whole domain ", fontweight='bold')
-	for label in axes.get_xticklabels() + axes.get_yticklabels():
-		label.set_fontweight('bold')
-
-	fig.tight_layout()
-	plt.savefig('2patch.png')
-	plt.show()
-
+from simplines import plot_SolutionMultipatch
+plotddm_result(nbpts, (xuh_0, xuh_01, xuh_02), (V_0, V_1, V_2), (xmp1, xmp2, xmp3))
+plot_SolutionMultipatch(nbpts, (xuh, xuh_1, xuh_2), (V_0, V_1, V_2), (xmp1, xmp2, xmp3), (ymp1, ymp2, ymp3))
