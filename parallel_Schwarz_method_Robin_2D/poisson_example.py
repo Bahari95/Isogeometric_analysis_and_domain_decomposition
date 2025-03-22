@@ -98,6 +98,8 @@ g        = ['sin(2.*pi*x)*sin(2.*pi*y)']
 geometry  = '../fields/annulus.xml'
 # Circle
 #geometry = '../fields/circle.xml'
+# Lshape
+geometry  = '../fields/lshape.xml'
 # ... Overlape ??
 #geometry  = '../fields/Annulus_over1.xml'
 
