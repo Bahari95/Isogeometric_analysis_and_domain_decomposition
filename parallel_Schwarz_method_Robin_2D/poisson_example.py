@@ -18,7 +18,7 @@ assemble_norm_l2     = compile_kernel(assemble_norm_ex01, arity=1)
 
 #..
 from   core.plot                    import plotddm_result
-from   core.plot                    import plot_SolutionMultipatch
+from   simplines                    import plot_SolutionMultipatch
 from   scipy.sparse                 import kron
 from   scipy.sparse                 import csr_matrix
 from   scipy.sparse                 import csc_matrix, linalg as sla
@@ -95,11 +95,13 @@ g        = ['sin(2.*pi*x)*sin(2.*pi*y)']
 # Quart annulus
 #geometry  = '../fields/quart_annulus.xml'
 # Half annulus
-geometry  = '../fields/annulus.xml'
+#geometry  = '../fields/annulus.xml'
 # Circle
 #geometry = '../fields/circle.xml'
 # Lshape
-geometry  = '../fields/lshape.xml'
+#geometry  = '../fields/lshape.xml'
+# DDM shape
+geometry  = '../fields/ddm.xml'
 # ... Overlape ??
 #geometry  = '../fields/Annulus_over1.xml'
 
