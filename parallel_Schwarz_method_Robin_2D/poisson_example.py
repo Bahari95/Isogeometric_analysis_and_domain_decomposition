@@ -19,6 +19,8 @@ assemble_norm_l2     = compile_kernel(assemble_norm_ex01, arity=1)
 #..
 from   core.plot                    import plotddm_result
 from   simplines                    import plot_SolutionMultipatch
+from   simplines                    import plot_MeshMultipatch
+
 from   scipy.sparse                 import kron
 from   scipy.sparse                 import csr_matrix
 from   scipy.sparse                 import csc_matrix, linalg as sla
@@ -82,8 +84,11 @@ class DDM_poisson(object):
 
 degree      = 2 # fixed by parameterization for now
 quad_degree = degree + 1
-nelements   = 128 # please take it as factor of 16 
+NRefine     = 2 #  nelements refined NRefine times 
 
+#---------------------------------------- 
+#..... Geometry parameterization
+#----------------------------------------
 #.. test 0
 g        = ['sin(2.*pi*x)*sin(2.*pi*y)']
 #.. test 1
@@ -110,10 +115,16 @@ print('#--- Poisson equation : ', geometry)
 #Annuls : patch 1
 # ... Assembling mapping
 mp1         = getGeometryMap(geometry,0)
-xmp1, ymp1  =  mp1.RefineGeometryMap(Nelements=(nelements, nelements))
 # ... Assembling mapping
 mp2         = getGeometryMap(geometry,1) # second part
-xmp2, ymp2  =  mp2.RefineGeometryMap(Nelements=(nelements, nelements))
+
+# ... Refine number of elements
+nelements   = (mp1.nelements[0] * NRefine, mp1.nelements[1] * NRefine) #... number of elements
+
+print('Number of elements in each direction : ', nelements)
+# ... Refine mapping
+xmp1, ymp1  =  mp1.RefineGeometryMap(Nelements= nelements)
+xmp2, ymp2  =  mp2.RefineGeometryMap(Nelements= nelements)
 
 #--------------------------------------------------------------
 #...End of parameterisation
@@ -121,7 +132,7 @@ xmp2, ymp2  =  mp2.RefineGeometryMap(Nelements=(nelements, nelements))
 # ... please take into account that : beta < alpha 
 alpha       = .25 # fixed by the geometry parameterization
 beta        = 0.25 # fixed by the geometry parameterization
-iter_max    = 10
+iter_max    = 100
 tol         = 1e-10
 S_DDM       = 1./0.5**2 #alpha/(nelements+1)
 xuh_0       = []
@@ -130,16 +141,16 @@ u_exact     = lambda x, y : eval(g[0])
 #--------------------------
 #..... Initialisation
 #--------------------------
-grids_0 = linspace(0, alpha, nelements+1)
+grids_0 = linspace(0, alpha, nelements[0]+1)
 # create the spline space for each direction
-V1_0    = SplineSpace(degree=degree, nelements= nelements, grid =grids_0, nderiv = 2, quad_degree = quad_degree)
-V2_0    = SplineSpace(degree=degree, nelements= nelements, nderiv = 2, quad_degree = quad_degree)
+V1_0    = SplineSpace(degree=degree, nelements= nelements[0], grid =grids_0, nderiv = 2, quad_degree = quad_degree)
+V2_0    = SplineSpace(degree=degree, nelements= nelements[1], nderiv = 2, quad_degree = quad_degree)
 V_0     = TensorSpace(V1_0, V2_0)
 
-grids_1 = linspace(beta, 1., nelements+1)
+grids_1 = linspace(beta, 1., nelements[0]+1)
 # create the spline space for each direction
-V1_1    = SplineSpace(degree=degree, nelements= nelements, grid =grids_1, nderiv = 2, quad_degree = quad_degree)
-V2_1    = SplineSpace(degree=degree, nelements= nelements,  nderiv = 2, quad_degree = quad_degree)
+V1_1    = SplineSpace(degree=degree, nelements= nelements[0], grid =grids_1, nderiv = 2, quad_degree = quad_degree)
+V2_1    = SplineSpace(degree=degree, nelements= nelements[1],  nderiv = 2, quad_degree = quad_degree)
 V_1     = TensorSpace(V1_1, V2_1)
 #...
 Vt_0    = TensorSpace(V1_0, V2_0, V1_1, V2_1)
@@ -212,3 +223,4 @@ for i in range(iter_max):
 nbpts  = 100
 plotddm_result(nbpts, (xuh_0,  xuh_01), (V_0, V_1), (xmp1, xmp2))
 plot_SolutionMultipatch(nbpts, (xuh, xuh_1), (V_0, V_1), (xmp1, xmp2), (ymp1, ymp2))
+plot_MeshMultipatch(nbpts, (V_0, V_1), (xmp1, xmp2), (ymp1, ymp2))
