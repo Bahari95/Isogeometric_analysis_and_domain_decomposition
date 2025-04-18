@@ -8,6 +8,7 @@ from simplines import pyccel_sol_field_2d
 from simplines import getGeometryMap
 from simplines import prolongation_matrix
 from simplines import least_square_Bspline
+from simplines import plot_MeshMultipatch
 #---In Poisson equation
 from gallery_section_04_Multipatch import assemble_vector_un_ex01   
 from gallery_section_04_Multipatch import assemble_matrix_un_ex01 
@@ -98,7 +99,7 @@ class DDM_poisson(object):
 
 degree      = 2
 quad_degree = degree + 1
-nelements   = 128 # please take it as factor of 16 
+NRefine     = 9# please take it as factor of 16 
 
 #.. Parameterisation of the domain and refinement
 
@@ -113,19 +114,19 @@ nelements   = 128 # please take it as factor of 16
 # F2 [0,1]x[0,1] -> [0,1]x[0.5,1]
 # create the spline space for each direction
 
-Vh1       = SplineSpace(degree=degree, nelements=nelements)
-Vh1       = TensorSpace(Vh1, Vh1)# after refinement
+# after refinement
 #----------------------------------------
 #..... Parameterization from 16*16 elements
 #----------------------------------------
 # Quart annulus
-#geometry  = '../parallel_Schwarz_method_Robin_2D/quart_annulus.xml'
+#geometry  = '../fields/quart_annulus.xml'
 # Half annulus
-geometry  = '../parallel_Schwarz_method_Robin_2D/half_annulus.xml'
+#geometry  = '../parallel_Schwarz_method_Robin_2D/half_annulus.xml'
 # Circle
-#geometry = '../parallel_Schwarz_method_Robin_2D/circle.xml'
+geometry  = '../fields/annulus.xml'
+#geometry = '../fields/circle.xml'
 # ... Overlape ??
-#geometry  = '../parallel_Schwarz_method_Robin_2D/Annulus_over1.xml'
+#geometry  = '../fields/Annulus_over1.xml'
 
 print('#---IN-UNIFORM--MESH-Poisson equation patch 1', geometry)
 
@@ -156,27 +157,30 @@ ymp2[0,:] = ymp1[-1,:] #C0
 
 xmp3[0,:] = xmp2[-1,:] #C0
 ymp3[0,:] = ymp2[-1,:] #C0
+print('#--- Poisson equation : ', geometry)
+
+#Annuls : patch 1
+# ... Assembling mapping
+mp1         = getGeometryMap(geometry,0)
+# ... Assembling mapping
+mp2         = getGeometryMap(geometry,1) # second part
+mp3         = getGeometryMap(geometry, 2)
+# ... Refine number of elements
+nelements   = (mp1.nelements[0] * NRefine, mp1.nelements[1] * NRefine) #... number of elements
+
+print('Number of elements in each direction : ', nelements)
+# ... Refine mapping
+xmp1, ymp1  =  mp1.RefineGeometryMap(Nelements= nelements)
+xmp2, ymp2  =  mp2.RefineGeometryMap(Nelements= nelements)
+xmp3, ymp3  =  mp3.RefineGeometryMap(Nelements= nelements)
 
 #xmp2[1,:] = 2.*xmp1[-1,:] - xmp1[-2,:] #C1
 #ymp2[1,:] = 2.*ymp1[-1,:] - ymp1[-2,:]  #C1
 
-#... Prolongation by knot insertion
-VH1       = SplineSpace(degree=degree, nelements=mp1.nbasis[0]-mp1.degree[0])
-VH1       = TensorSpace(VH1, VH1)# before refinement
 
-M_mp      = prolongation_matrix(VH1, Vh1)
-
-xmp1      = (M_mp.dot(xmp1.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nbasis)
-ymp1      = (M_mp.dot(ymp1.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nbasis)
-
-xmp2      = (M_mp.dot(xmp2.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nbasis)
-ymp2      = (M_mp.dot(ymp2.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nbasis)
-
-xmp3      = (M_mp.dot(xmp3.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nbasis)
-ymp3      = (M_mp.dot(ymp3.reshape(VH1.nbasis[0]*VH1.nbasis[1]))).reshape(Vh1.nbasis)
 
 #-------------++++++++++++++++-------------------------------------------------
-
+'''
 fig =plt.figure() 
 for i in range(Vh1.nbasis[1]):
    phidx = xmp1[:,i]
@@ -283,7 +287,7 @@ plt.text(-0.5, 0.5, r'$\Omega_3$', fontsize=20)
 
 plt.show() 
 
-
+'''
 #--------------------------------------------------------------
 
 #...End of parameterisation
@@ -305,21 +309,21 @@ u_exact   = lambda x, y : sin(2.*pi*x)*sin(2.*pi*y)
 #--------------------------
 #..... Initialisation
 #--------------------------
-grids_0 = linspace(0., alpha_1, nelements+1)
+grids_0 = linspace(0., alpha_1, nelements[0]+1)
 # create the spline space for each direction
-V1_0    = SplineSpace(degree=degree, nelements= nelements, grid =grids_0, nderiv = 2, quad_degree = quad_degree)
-V2_0    = SplineSpace(degree=degree, nelements= nelements, nderiv = 2, quad_degree = quad_degree)
+V1_0    = SplineSpace(degree=degree, nelements= nelements[0], grid =grids_0, nderiv = 2, quad_degree = quad_degree)
+V2_0    = SplineSpace(degree=degree, nelements= nelements[0], nderiv = 2, quad_degree = quad_degree)
 V_0     = TensorSpace(V1_0, V2_0)
 
-grids_1 = linspace(alpha_1, alpha_2, nelements+1)
+grids_1 = linspace(alpha_1, alpha_2, nelements[0]+1)
 # create the spline space for each direction
-V1_1    = SplineSpace(degree=degree, nelements= nelements, grid =grids_1, nderiv = 2, quad_degree = quad_degree)
-V2_1    = SplineSpace(degree=degree, nelements= nelements,  nderiv = 2, quad_degree = quad_degree)
+V1_1    = SplineSpace(degree=degree, nelements= nelements[0], grid =grids_1, nderiv = 2, quad_degree = quad_degree)
+V2_1    = SplineSpace(degree=degree, nelements= nelements[0],  nderiv = 2, quad_degree = quad_degree)
 V_1     = TensorSpace(V1_1, V2_1)
 
-grids_2 = linspace(alpha_2, 1., nelements+1)
-V1_2    = SplineSpace(degree=degree, nelements= nelements, grid =grids_2, nderiv = 2, quad_degree = quad_degree)
-V2_2    = SplineSpace(degree=degree, nelements= nelements,  nderiv = 2, quad_degree = quad_degree)
+grids_2 = linspace(alpha_2, 1., nelements[0]+1)
+V1_2    = SplineSpace(degree=degree, nelements= nelements[0], grid =grids_2, nderiv = 2, quad_degree = quad_degree)
+V2_2    = SplineSpace(degree=degree, nelements= nelements[0],  nderiv = 2, quad_degree = quad_degree)
 V_2    = TensorSpace(V1_2, V2_2)
 
 #...
@@ -343,6 +347,8 @@ w12_mpH        = StencilVector(V_2.vector_space)
 w11_mpH.from_array(V_2, xmp3)
 w12_mpH.from_array(V_2, ymp3)
 # --- Initialization domain in left
+nbpts =100
+plot_MeshMultipatch(nbpts, (V_0, V_1, V_2), (xmp1, xmp2, xmp3), (ymp1, ymp2, ymp3))
 domain_nb = 0
 
 n_dir      = V1_0.nbasis + V2_0.nbasis+100

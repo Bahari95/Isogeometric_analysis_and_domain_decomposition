@@ -84,7 +84,7 @@ class DDM_poisson(object):
 
 degree      = 2 # fixed by parameterization for now
 quad_degree = degree + 1
-NRefine     = 2 #  nelements refined NRefine times 
+NRefine     = 4 #  nelements refined NRefine times 
 
 #---------------------------------------- 
 #..... Geometry parameterization
@@ -98,7 +98,7 @@ g        = ['sin(2.*pi*x)*sin(2.*pi*y)']
 #..... Parameterization from 16*16 elements
 #----------------------------------------
 # Quart annulus
-#geometry  = '../fields/quart_annulus.xml'
+geometry  = '../fields/quart_annulus.xml'
 # Half annulus
 #geometry  = '../fields/annulus.xml'
 # Circle
@@ -106,7 +106,7 @@ g        = ['sin(2.*pi*x)*sin(2.*pi*y)']
 # Lshape
 #geometry  = '../fields/lshape.xml'
 # DDM shape
-geometry  = '../fields/ddm.xml'
+#geometry  = '../fields/ddm.xml'
 # ... Overlape ??
 #geometry  = '../fields/Annulus_over1.xml'
 
@@ -134,7 +134,7 @@ alpha       = .25 # fixed by the geometry parameterization
 beta        = 0.25 # fixed by the geometry parameterization
 iter_max    = 100
 tol         = 1e-10
-S_DDM       = 1./0.5**2 #alpha/(nelements+1)
+S_DDM       = 1./alpha**2 #alpha/(nelements+1)
 xuh_0       = []
 xuh_01      = []
 u_exact     = lambda x, y : eval(g[0])
@@ -142,6 +142,7 @@ u_exact     = lambda x, y : eval(g[0])
 #..... Initialisation
 #--------------------------
 grids_0 = linspace(0, alpha, nelements[0]+1)
+print( nelements[0])
 # create the spline space for each direction
 V1_0    = SplineSpace(degree=degree, nelements= nelements[0], grid =grids_0, nderiv = 2, quad_degree = quad_degree)
 V2_0    = SplineSpace(degree=degree, nelements= nelements[1], nderiv = 2, quad_degree = quad_degree)
@@ -174,7 +175,7 @@ x_d, u_d = build_dirichlet(V_0, g, map = (xmp1, ymp1))
 x_d[-1, :] = 0.
 u_d.from_array(V_0, x_d)
 P0      = DDM_poisson(V_0, Vt_0, u11_mpH, u12_mpH, v11_mpH, v12_mpH, u_d, S_DDM, domain_nb, alpha )
-
+#for S_DDM     in np.arange(0.1, 100, 0.1):
 # --- Initialization domain in right
 domain_nb = 1
 #.. Dirichlet boundary condition
@@ -218,8 +219,9 @@ for i in range(iter_max):
 	r = abs(l2_norm -l2_norm1)
 	print('')
 	print('Iteration {}-----> L^2-error ={} -----> H^1-error = {}-----> Residual =  {}'.format(i+1, f"{l2_err:.2e}",  f"{H1_err:.2e}", f"{r:.2e}" ))
-
-#---Compute a solution
+	print('')
+	print('')
+	#---Compute a solution
 nbpts  = 100
 plotddm_result(nbpts, (xuh_0,  xuh_01), (V_0, V_1), (xmp1, xmp2))
 plot_SolutionMultipatch(nbpts, (xuh, xuh_1), (V_0, V_1), (xmp1, xmp2), (ymp1, ymp2))
