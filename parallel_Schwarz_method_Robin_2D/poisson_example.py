@@ -84,7 +84,7 @@ class DDM_poisson(object):
 
 degree      = 2 # fixed by parameterization for now
 quad_degree = degree + 1
-NRefine     = 4 #  nelements refined NRefine times 
+NRefine     = 12 #  nelements refined NRefine times 
 
 #---------------------------------------- 
 #..... Geometry parameterization
@@ -98,7 +98,7 @@ g        = ['sin(2.*pi*x)*sin(2.*pi*y)']
 #..... Parameterization from 16*16 elements
 #----------------------------------------
 # Quart annulus
-geometry  = '../fields/quart_annulus.xml'
+#geometry  = '../fields/quart_annulus.xml'
 # Half annulus
 #geometry  = '../fields/annulus.xml'
 # Circle
@@ -107,6 +107,10 @@ geometry  = '../fields/quart_annulus.xml'
 #geometry  = '../fields/lshape.xml'
 # DDM shape
 #geometry  = '../fields/ddm.xml'
+# DDM shape
+geometry  = '../fields/ddm2.xml'
+# DDM shape
+#geometry  = '../fields/ddm3.xml'
 # ... Overlape ??
 #geometry  = '../fields/Annulus_over1.xml'
 
