@@ -159,12 +159,12 @@ grids_1 = grid_g[nelements-2:]
 
 
 # create the spline space for each direction
-V0     = SplineSpace(degree=degree, nelements= nelements, grid = grids_0, nderiv = 2, quad_degree = quad_degree, sharing_grid = Igrid_0)
+V0      = SplineSpace(degree=degree, nelements= nelements, grid = grids_0, nderiv = 2, quad_degree = quad_degree, sharing_grid = Igrid_0)
 # create the spline space for each direction
-V1    = SplineSpace(degree=degree, nelements= nelements, grid = grids_1, nderiv = 2, quad_degree = quad_degree, sharing_grid = Igrid_1)
+V1      = SplineSpace(degree=degree, nelements= nelements, grid = grids_1, nderiv = 2, quad_degree = quad_degree, sharing_grid = Igrid_1)
 
 # ... B-spline space in y direction
-V2    = SplineSpace(degree=degree, nelements= nelements, nderiv = 2, quad_degree = quad_degree, sharing_grid = grid_y)
+V2      = SplineSpace(degree=degree, nelements= nelements, nderiv = 2, quad_degree = quad_degree, sharing_grid = grid_y)
 
 # ...
 Vh_0    = TensorSpace(V0, V2)

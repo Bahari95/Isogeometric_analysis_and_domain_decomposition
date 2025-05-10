@@ -18,7 +18,7 @@ assemble_norm_l2     = compile_kernel(assemble_norm_ex01, arity=1)
 
 #..
 from   core.plot                    import plotddm_result
-from   simplines                    import plot_SolutionMultipatch
+from   simplines                    import plot_SolutionMultipatch, plot_JacobianMultipatch
 from   simplines                    import plot_MeshMultipatch
 
 from   scipy.sparse                 import kron
@@ -82,15 +82,15 @@ class DDM_poisson(object):
 		H1_norm             = norm[1]       
 		return u, x, l2_norm, H1_norm
 
-degree      = 2 # fixed by parameterization for now
+degree      = 2  # fixed by parameterization for now
 quad_degree = degree + 1
-NRefine     = 12 #  nelements refined NRefine times 
+NRefine     = 4 # nelements refined NRefine times 
 
 #---------------------------------------- 
 #..... Geometry parameterization
 #----------------------------------------
 #.. test 0
-g        = ['sin(2.*pi*x)*sin(2.*pi*y)']
+g         = ['sin(2.*pi*x)*sin(2.*pi*y)']
 #.. test 1
 #g        = ['5.0/cosh(50 * ((8*(x-0.5)**2) -y**2* 0.125))*(1.-x**2-y**2)*y']
 
@@ -104,11 +104,11 @@ g        = ['sin(2.*pi*x)*sin(2.*pi*y)']
 # Circle
 #geometry = '../fields/circle.xml'
 # Lshape
-#geometry  = '../fields/lshape.xml'
+geometry  = '../fields/lshape.xml'
 # DDM shape
 #geometry  = '../fields/ddm.xml'
 # DDM shape
-geometry  = '../fields/ddm2.xml'
+# geometry  = '../fields/ddm2.xml'
 # DDM shape
 #geometry  = '../fields/ddm3.xml'
 # ... Overlape ??
@@ -130,15 +130,20 @@ print('Number of elements in each direction : ', nelements)
 xmp1, ymp1  =  mp1.RefineGeometryMap(Nelements= nelements)
 xmp2, ymp2  =  mp2.RefineGeometryMap(Nelements= nelements)
 
+
+#xmp2[1,:] = xmp2[1,:]+ 0.001
+
+
 #--------------------------------------------------------------
 #...End of parameterisation
 #--------------------------------------------------------------
 # ... please take into account that : beta < alpha 
-alpha       = .25 # fixed by the geometry parameterization
-beta        = 0.25 # fixed by the geometry parameterization
+nbpts       = 100 # number of points for plot
+alpha       = 1. # fixed by the geometry parameterization
+beta        = 1. # fixed by the geometry parameterization
 iter_max    = 100
 tol         = 1e-10
-S_DDM       = 1./alpha**2 #alpha/(nelements+1)
+S_DDM       = 1e+2
 xuh_0       = []
 xuh_01      = []
 u_exact     = lambda x, y : eval(g[0])
@@ -148,13 +153,13 @@ u_exact     = lambda x, y : eval(g[0])
 grids_0 = linspace(0, alpha, nelements[0]+1)
 print( nelements[0])
 # create the spline space for each direction
-V1_0    = SplineSpace(degree=degree, nelements= nelements[0], grid =grids_0, nderiv = 2, quad_degree = quad_degree)
+V1_0    = SplineSpace(degree=degree, nelements= nelements[0], grid = grids_0, nderiv = 2, quad_degree = quad_degree)
 V2_0    = SplineSpace(degree=degree, nelements= nelements[1], nderiv = 2, quad_degree = quad_degree)
 V_0     = TensorSpace(V1_0, V2_0)
 
-grids_1 = linspace(beta, 1., nelements[0]+1)
+grids_1 = linspace(beta, 2., nelements[0]+1)
 # create the spline space for each direction
-V1_1    = SplineSpace(degree=degree, nelements= nelements[0], grid =grids_1, nderiv = 2, quad_degree = quad_degree)
+V1_1    = SplineSpace(degree=degree, nelements= nelements[0], grid = grids_1, nderiv = 2, quad_degree = quad_degree)
 V2_1    = SplineSpace(degree=degree, nelements= nelements[1],  nderiv = 2, quad_degree = quad_degree)
 V_1     = TensorSpace(V1_1, V2_1)
 #...
@@ -171,6 +176,7 @@ v11_mpH        = StencilVector(V_1.vector_space)
 v12_mpH        = StencilVector(V_1.vector_space)
 v11_mpH.from_array(V_1, xmp2)
 v12_mpH.from_array(V_1, ymp2)
+
 
 # --- Initialization domain in left
 domain_nb = 0
@@ -226,7 +232,7 @@ for i in range(iter_max):
 	print('')
 	print('')
 	#---Compute a solution
-nbpts  = 100
 plotddm_result(nbpts, (xuh_0,  xuh_01), (V_0, V_1), (xmp1, xmp2))
 plot_SolutionMultipatch(nbpts, (xuh, xuh_1), (V_0, V_1), (xmp1, xmp2), (ymp1, ymp2))
+plot_JacobianMultipatch(nbpts, (V_0, V_1), (xmp1, xmp2), (ymp1, ymp2))
 plot_MeshMultipatch(nbpts, (V_0, V_1), (xmp1, xmp2), (ymp1, ymp2))
