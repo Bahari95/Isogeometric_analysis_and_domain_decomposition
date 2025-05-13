@@ -1,5 +1,12 @@
-from simplines import compile_kernel, apply_dirichlet
-
+"""
+# plot_patches : This script demonstrates how to create and visualize a multipatch configuration using the simplines library.
+# 1. Import the necessary libraries
+# 2. Define the degree and refinement level for the spline space
+# 3. Specify the geometry file and the list of indices for the patches
+# 4. Initialize the spline spaces and geometry mappings for each patch
+# 5. Plot the Jacobian and mesh for the multipatch configuration
+#   @ M. Bahari : TODO 2.5d and 3d parallelization and post-processing using VTK
+# """
 from simplines import SplineSpace
 from simplines import TensorSpace
 from simplines import getGeometryMap
