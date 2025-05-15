@@ -25,15 +25,16 @@ NRefine     = 4 # nelements refined NRefine times
 # Quart annulus
 #geometry  = './fields/quart_annulus.xml'
 # Half annulus
-geometry  = './fields/annulus_48.xml'
-ListINdex = [11, 21, 31, 41, 51, 61, 71, 81, 12, 22, 32, 42, 52, 62, 72, 82, 13, 23, 33, 43, 53, 63, 73, 83, 14, 24, 34, 44, 54, 64, 74, 84]
+#geometry  = './fields/annulus_48.xml'
+#ListINdex = [11, 21, 31, 41, 51, 61, 71, 81, 12, 22, 32, 42, 52, 62, 72, 82, 13, 23, 33, 43, 53, 63, 73, 83, 14, 24, 34, 44, 54, 64, 74, 84]
 # Circle
 #geometry = './fields/circle.xml'
 # Lshape
 #geometry  = './fields/lshape.xml'
 #ListINdex = [0, 1]
 # DDM shape
-#geometry  = './fields/ddm.xml'
+geometry  = './fields/ddm3.xml'
+ListINdex = [0, 1]
 # DDM shape
 # geometry  = './fields/ddm2.xml'
 # DDM shape
