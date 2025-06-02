@@ -32,19 +32,22 @@ NRefine     = 4 # nelements refined NRefine times
 # Lshape
 #geometry  = './fields/lshape.xml'
 #ListINdex = [0, 1]
-# DDM shape
+# DDM shape G1
 geometry  = './fields/ddm3.xml'
 ListINdex = [0, 1]
 # DDM shape
 # geometry  = './fields/ddm2.xml'
 # DDM shape
 #geometry  = './fields/ddm3.xml'
-# ... Overlape ??
-#geometry  = './fields/Annulus_over1.xml'
-
+# ... infinite plate with circular hole G1
+#geometry  = './fields/square_circularhole.xml'
+#ListINdex = [0, 1, 2, 3]
+# Annulus G1 continuous
+#geometry  = './fields/annulus_G1.xml'
+#ListINdex = [0, 1, 2, 3]
 print('#--- Plot geometry : ', geometry)
 
-nbpts       = 100 # number of points for plot
+nbpts       = 50 # number of points for plot
 
 #--------------------------
 #..... Initialisation
@@ -71,5 +74,5 @@ for i in ListINdex:
     V2_0        = SplineSpace(degree=mp.degree[1], nelements= nelements[1])
     V.append(TensorSpace(V1_0, V2_0))
 
-plot_JacobianMultipatch(nbpts, V, xmp, ymp)
-plot_MeshMultipatch(nbpts, V, xmp, ymp)
+plot_JacobianMultipatch(nbpts, V, xmp, ymp, savefig ='Jacobian.png')
+plot_MeshMultipatch(nbpts, V, xmp, ymp, cp = False, savefig ='Mesh.png')
