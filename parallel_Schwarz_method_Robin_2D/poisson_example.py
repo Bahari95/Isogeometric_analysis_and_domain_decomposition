@@ -108,9 +108,9 @@ g         = ['sin(2.*pi*x)*sin(2.*pi*y)']
 # DDM shape
 #geometry  = '../fields/ddm.xml'
 # DDM shape
-# geometry  = '../fields/ddm2.xml'
+geometry  = '../fields/ddm2.xml'
 # DDM shape
-geometry  = '../fields/ddm3.xml'
+#geometry  = '../fields/ddm3.xml'
 # ... Overlape ??
 #geometry  = '../fields/Annulus_over1.xml'
 

@@ -1,25 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xml>
-  <!-- Computational domain -->
-  <MultiPatch parDim="2" id="0">
-    <patches type="id_range">500 501</patches>
-    <interfaces>501 1 500 2 0 1 1 1
-    </interfaces>
-    <boundary name="dirichlet">
-      501 4
-      500 3
-      501 3
-      500 4
-      500 1
-      501 2
-    </boundary>
-  </MultiPatch>
-
   <!-- Right-hand side function -->
   <Function type="FunctionExpr" id="1" dim="2">8.*pi^2*sin(2.*pi*x)*sin(2.*pi*y)</Function>
 
   <!-- Spline data -->
-  <Geometry type="TensorNurbs2" id="500">
+  <Geometry type="TensorNurbs2" id="0">
   <Basis type="TensorNurbsBasis2">
    <Basis type="TensorBSplineBasis2" parDim="2">
     <Basis type="BSplineBasis" index="0">
@@ -43,7 +28,7 @@
     0 1
     </coefs>
  </Geometry>
- <Geometry type="TensorNurbs2" id="501">
+ <Geometry type="TensorNurbs2" id="1">
   <Basis type="TensorNurbsBasis2">
    <Basis type="TensorBSplineBasis2" parDim="2">
     <Basis type="BSplineBasis" index="0">
