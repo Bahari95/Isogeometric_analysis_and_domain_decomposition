@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xml>
-  <!-- Right-hand side function -->
-  <Function type="FunctionExpr" id="1" dim="2">8.*pi^2*sin(2.*pi*x)*sin(2.*pi*y)</Function>
 
   <!-- Spline data -->
   <Geometry type="TensorNurbs2" id="0">
@@ -32,20 +30,23 @@
   <Basis type="TensorNurbsBasis2">
    <Basis type="TensorBSplineBasis2" parDim="2">
     <Basis type="BSplineBasis" index="0">
-     <KnotVector degree="1">0.00000   0.00000   1.00000   1.00000</KnotVector>
+     <KnotVector degree="2">0.00000   0.00000   0.00000   1.00000   1.00000   1.00000</KnotVector>
     </Basis>
     <Basis type="BSplineBasis" index="1">
      <KnotVector degree="2">0.00000   0.00000   0.00000   1.00000   1.00000   1.00000</KnotVector>
     </Basis>
    </Basis>
-  <weights>1 1 0.707106781186548 0.707106781186548 1 1 </weights>
+  <weights>1 1 1 0.707106781186548 0.707106781186548 0.707106781186548 1 1 1 </weights>
   </Basis>
   <coefs geoDim="2">
     1 0
+    1.5 0.5
     2 1
     1 1
+    1.25 1.25
     1.5 1.5
     0 1
+    0.5 1.5
     1 2
     </coefs>
  </Geometry>
