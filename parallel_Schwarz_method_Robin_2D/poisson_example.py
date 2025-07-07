@@ -24,7 +24,7 @@ from   simplines                    import plot_MeshMultipatch
 from   scipy.sparse                 import kron
 from   scipy.sparse                 import csr_matrix
 from   scipy.sparse                 import csc_matrix, linalg as sla
-from   numpy                        import zeros, linalg, asarray, linspace
+from   numpy                        import zeros, linalg, asarray, linspace, tanh
 from   numpy                        import cos, sin, pi, exp, sqrt, arctan2, cosh
 from   tabulate                     import tabulate
 import numpy                        as     np
@@ -84,7 +84,7 @@ class DDM_poisson(object):
 
 degree      = 2  # fixed by parameterization for now
 quad_degree = degree + 1
-NRefine     = 20# nelements refined NRefine times 
+NRefine     = 32# nelements refined NRefine times 
 
 #---------------------------------------- 
 #..... Geometry parameterization
@@ -92,7 +92,7 @@ NRefine     = 20# nelements refined NRefine times
 #.. test 0
 #g         = ['sin(2.*pi*x)*sin(2.*pi*y)']
 #.. test 1
-g        = ['5.0/cosh(50 * ((8*(x-0.5)**2) -y**2* 0.125))*(1.-x**2-y**2)*y']
+g        = ['tanh( (0.4-np.sqrt((x-0.5)**2+ (y-0.5)**2))/(sqrt(2)*0.07))']
 
 #----------------------------------------
 #..... Parameterization from 16*16 elements
@@ -133,10 +133,6 @@ print('Number of elements in each direction : ', nelements)
 # ... Refine mapping
 xmp1, ymp1  =  mp1.RefineGeometryMap(Nelements= nelements)
 xmp2, ymp2  =  mp2.RefineGeometryMap(Nelements= nelements)
-
-#xmp2[1,:] = 2.*xmp1[-1,:] - xmp1[-2,:] #C1
-#ymp2[1,:] = 2.*ymp1[-1,:] - ymp1[-2,:]  #C1
-
 
 #xmp2[1,:] = xmp2[1,:]+ 0.001
 
@@ -197,7 +193,8 @@ P0      = DDM_poisson(V_0, Vt_0, u11_mpH, u12_mpH, v11_mpH, v12_mpH, u_d, S_DDM,
 # --- Initialization domain in right
 domain_nb = 1
 #.. Dirichlet boundary condition
-x_d,  u_d = build_dirichlet(V_0, g, map = (xmp2, ymp2))
+x_d,  u_d = build_dirichlet(V_1, g, map = (xmp2, ymp2))
+
 x_d[0, :] = 0.
 u_d.from_array(V_1, x_d)
 P1      = DDM_poisson(V_1, Vt_1, v11_mpH, v12_mpH, u11_mpH, u12_mpH, u_d, S_DDM, domain_nb, beta  )
@@ -241,6 +238,9 @@ for i in range(iter_max):
 	print('')
 	#---Compute a solution
 plotddm_result(nbpts, (xuh_0,  xuh_01), (V_0, V_1), (xmp1, xmp2))
-plot_SolutionMultipatch(nbpts, (xuh, xuh_1), (V_0, V_1), (xmp1, xmp2), (ymp1, ymp2))
-plot_JacobianMultipatch(nbpts, (V_0, V_1), (xmp1, xmp2), (ymp1, ymp2))
-plot_MeshMultipatch(nbpts, (V_0, V_1), (xmp1, xmp2), (ymp1, ymp2))
+
+from simplines import paraview_SolutionMultipatch
+
+paraview_SolutionMultipatch(nbpts, (V_0, V_1), (xmp1, xmp2), (ymp1, ymp2), xuh = (xuh,  xuh_1), Func = u_exact)
+# plot_JacobianMultipatch(nbpts, (V_0, V_1), (xmp1, xmp2), (ymp1, ymp2))
+# plot_MeshMultipatch(nbpts, (V_0, V_1), (xmp1, xmp2), (ymp1, ymp2))

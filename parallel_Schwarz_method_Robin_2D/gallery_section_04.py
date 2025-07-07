@@ -199,7 +199,7 @@ def assemble_vector_un_ex01(ne1, ne2, ne3, ne4,
     from numpy import empty
     from numpy import cos, cosh
     from numpy import sin, sinh
-    from numpy import pi
+    from numpy import pi, tanh
     from numpy import arctan2
     from numpy import sqrt
     from numpy import zeros
@@ -276,6 +276,7 @@ def assemble_vector_un_ex01(ne1, ne2, ne3, ne4,
                     #.. Test 1
                     f = 2.*(2.*pi)**2*sin(2.*pi*x)*sin(2.*pi*y)
                     # .. Test 2 Quart annnulus
+                    f = 7.14285714285714*sqrt(2)*(0.5 - x)*(1 - tanh(7.14285714285714*sqrt(2)*(0.4 - sqrt((x - 0.5)**2 + (y - 0.5)**2)))**2)*(x - 0.5)/((x - 0.5)**2 + (y - 0.5)**2)**(3/2) + 7.14285714285714*sqrt(2)*(0.5 - y)*(1 - tanh(7.14285714285714*sqrt(2)*(0.4 - sqrt((x - 0.5)**2 + (y - 0.5)**2)))**2)*(y - 0.5)/((x - 0.5)**2 + (y - 0.5)**2)**(3/2) + 204.081632653061*(1 - tanh(7.14285714285714*sqrt(2)*(0.4 - sqrt((x - 0.5)**2 + (y - 0.5)**2)))**2)*(x - 0.5)**2*tanh(7.14285714285714*sqrt(2)*(0.4 - sqrt((x - 0.5)**2 + (y - 0.5)**2)))/((x - 0.5)**2 + (y - 0.5)**2) + 204.081632653061*(1 - tanh(7.14285714285714*sqrt(2)*(0.4 - sqrt((x - 0.5)**2 + (y - 0.5)**2)))**2)*(y - 0.5)**2*tanh(7.14285714285714*sqrt(2)*(0.4 - sqrt((x - 0.5)**2 + (y - 0.5)**2)))/((x - 0.5)**2 + (y - 0.5)**2) + 14.2857142857143*sqrt(2)*(1 - tanh(7.14285714285714*sqrt(2)*(0.4 - sqrt((x - 0.5)**2 + (y - 0.5)**2)))**2)/sqrt((x - 0.5)**2 + (y - 0.5)**2)
                     #f =  -20.0*x*y*(800*x - 400.0)*sinh(-6.25*y**2 + 400*(x - 0.5)**2)/cosh(-6.25*y**2 + 400*(x - 0.5)**2)**2 - 1562.5*y**3*(-x**2 - y**2 + 1.0)*sinh(-6.25*y**2 + 400*(x - 0.5)**2)**2/cosh(-6.25*y**2 + 400*(x - 0.5)**2)**3 
                     #f += 781.25*y**3*(-x**2 - y**2 + 1.0)/cosh(-6.25*y**2 + 400*(x - 0.5)**2) + 250.0*y**3*sinh(-6.25*y**2 + 400*(x - 0.5)**2)/cosh(-6.25*y**2 + 400*(x - 0.5)**2)**2 - 6400000.0*y*(x - 0.5)**2*(-x**2 - y**2 + 1.0)*sinh(-6.25*y**2 + 400*(x - 0.5)**2)**2/cosh(-6.25*y**2 + 400*(x - 0.5)**2)**3 
                     #f += 5.0*y*(640000*(x - 0.5)**2)*(-x**2 - y**2 + 1.0)/cosh(-6.25*y**2 + 400*(x - 0.5)**2) + 3812.5*y*(-x**2 - y**2 + 1.0)*sinh(-6.25*y**2 + 400*(x - 0.5)**2)/cosh(-6.25*y**2 + 400*(x - 0.5)**2)**2 + 40.0*y/cosh(-6.25*y**2 + 400*(x - 0.5)**2) 
@@ -469,7 +470,7 @@ def assemble_norm_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,  w
     from numpy import exp
     from numpy import pi
     from numpy import sin, sinh
-    from numpy import arctan2
+    from numpy import arctan2, tanh
     from numpy import cos, cosh
     from numpy import sqrt
     from numpy import zeros
@@ -556,13 +557,13 @@ def assemble_norm_ex01(ne1, ne2, p1, p2, spans_1, spans_2,  basis_1, basis_2,  w
                     sx    = lvalues_ux[g1,g2]
                     sy    = lvalues_uy[g1,g2]
                     #... TEST 2 Quart annulus
-                    #f    = 5.0/cosh(50 * ((8*(x-0.5)**2) -y**2* 0.125))*(1.-x**2-y**2)*y
-                    #fx   = -10.0*x*y/cosh(-6.25*y**2 + 400*(x - 0.5)**2) - 5.0*y*(800*x - 400.0)*(-x**2 - y**2 + 1.0)*sinh(-6.25*y**2 + 400*(x - 0.5)**2)/cosh(-6.25*y**2 + 400*(x - 0.5)**2)**2 
-                    #fy   =  62.5*y**2*(-x**2 - y**2 + 1.0)*sinh(-6.25*y**2 + 400*(x - 0.5)**2)/cosh(-6.25*y**2 + 400*(x - 0.5)**2)**2 - 10.0*y**2/cosh(-6.25*y**2 + 400*(x - 0.5)**2) + 5.0*(-x**2 - y**2 + 1.0)/cosh(-6.25*y**2 + 400*(x - 0.5)**2)  
+                    f    =  tanh( (0.4-sqrt((x-0.5)**2+ (y-0.5)**2))/(sqrt(2)*0.07))
+                    fx   = -7.14285714285714*sqrt(2)*(1 - tanh(7.14285714285714*sqrt(2)*(0.4 - sqrt((x - 0.5)**2 + (y - 0.5)**2)))**2)*(x - 0.5)/sqrt((x - 0.5)**2 + (y - 0.5)**2) 
+                    fy   =  -7.14285714285714*sqrt(2)*(1 - tanh(7.14285714285714*sqrt(2)*(0.4 - sqrt((x - 0.5)**2 + (y - 0.5)**2)))**2)*(y - 0.5)/sqrt((x - 0.5)**2 + (y - 0.5)**2) 
                     #... 
-                    f    = sin(2.*pi*x)*sin(2.*pi*y)
-                    fx   = 2.*pi*cos(2.*pi*x)*sin(2.*pi*y)
-                    fy   = 2.*pi*sin(2.*pi*x)*cos(2.*pi*y)
+                    #f    = sin(2.*pi*x)*sin(2.*pi*y)
+                    #fx   = 2.*pi*cos(2.*pi*x)*sin(2.*pi*y)
+                    #fy   = 2.*pi*sin(2.*pi*x)*cos(2.*pi*y)
                     # ...
                     uhx   = (F2y*sx-F2x*sy)/det_J
                     uhy   = (F1x*sy-F1y*sx)/det_J
