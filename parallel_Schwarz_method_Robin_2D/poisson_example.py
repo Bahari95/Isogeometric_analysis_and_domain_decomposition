@@ -84,21 +84,21 @@ class DDM_poisson(object):
 
 degree      = 2  # fixed by parameterization for now
 quad_degree = degree + 1
-NRefine     = 8 # nelements refined NRefine times 
+NRefine     = 20# nelements refined NRefine times 
 
 #---------------------------------------- 
 #..... Geometry parameterization
 #----------------------------------------
 #.. test 0
-g         = ['sin(2.*pi*x)*sin(2.*pi*y)']
+#g         = ['sin(2.*pi*x)*sin(2.*pi*y)']
 #.. test 1
-#g        = ['5.0/cosh(50 * ((8*(x-0.5)**2) -y**2* 0.125))*(1.-x**2-y**2)*y']
+g        = ['5.0/cosh(50 * ((8*(x-0.5)**2) -y**2* 0.125))*(1.-x**2-y**2)*y']
 
 #----------------------------------------
 #..... Parameterization from 16*16 elements
 #----------------------------------------
 # Quart annulus
-#geometry  = '../fields/quart_annulus.xml'
+geometry  = '../fields/quart_annulus.xml'
 # Half annulus
 #geometry  = '../fields/annulus.xml'
 # Circle
@@ -108,11 +108,15 @@ g         = ['sin(2.*pi*x)*sin(2.*pi*y)']
 # DDM shape
 #geometry  = '../fields/ddm.xml'
 # DDM shape
-geometry  = '../fields/ddm2.xml'
+#geometry  = '../fields/ddm2.xml'
 # DDM shape
 #geometry  = '../fields/ddm3.xml'
 # ... Overlape ??
 #geometry  = '../fields/Annulus_over1.xml'
+
+#geometry  = '../fields/annulus_48.xml'
+
+#geometry  = '../fields/annulus_G1.xml'
 
 print('#--- Poisson equation : ', geometry)
 
@@ -130,6 +134,9 @@ print('Number of elements in each direction : ', nelements)
 xmp1, ymp1  =  mp1.RefineGeometryMap(Nelements= nelements)
 xmp2, ymp2  =  mp2.RefineGeometryMap(Nelements= nelements)
 
+#xmp2[1,:] = 2.*xmp1[-1,:] - xmp1[-2,:] #C1
+#ymp2[1,:] = 2.*ymp1[-1,:] - ymp1[-2,:]  #C1
+
 
 #xmp2[1,:] = xmp2[1,:]+ 0.001
 
@@ -143,7 +150,8 @@ alpha       = 1. # fixed by the geometry parameterization
 beta        = 1. # fixed by the geometry parameterization
 iter_max    = 100
 tol         = 1e-10
-S_DDM       = 1e+2
+L           = 1  #the size of the parametric space
+S_DDM       = (pi/(2*L)) #lowest eigein values
 xuh_0       = []
 xuh_01      = []
 u_exact     = lambda x, y : eval(g[0])
