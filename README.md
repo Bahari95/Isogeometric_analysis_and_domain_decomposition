@@ -9,6 +9,8 @@ TODO:
 
 
 ## some papers
+https://inria.hal.science/hal-02197673/file/paper.pdf
+
 https://doi.org/10.1016/j.cma.2021.114017
 
 https://sci-hub.se/https://doi.org/10.1016/j.cma.2019.07.010
