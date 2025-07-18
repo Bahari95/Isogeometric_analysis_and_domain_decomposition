@@ -131,8 +131,8 @@ nelements   = (mp1.nelements[0] * NRefine, mp1.nelements[1] * NRefine) #... numb
 
 print('Number of elements in each direction : ', nelements)
 # ... Refine mapping
-xmp1, ymp1  =  mp1.RefineGeometryMap(Nelements= nelements)
-xmp2, ymp2  =  mp2.RefineGeometryMap(Nelements= nelements)
+xmp1, ymp1  =  mp1.RefineGeometryMap(Nelements= nelements)[1:]
+xmp2, ymp2  =  mp2.RefineGeometryMap(Nelements= nelements)[1:]
 
 #xmp2[1,:] = xmp2[1,:]+ 0.001
 
@@ -240,7 +240,9 @@ for i in range(iter_max):
 plotddm_result(nbpts, (xuh_0,  xuh_01), (V_0, V_1), (xmp1, xmp2))
 
 from simplines import paraview_SolutionMultipatch
-
-paraview_SolutionMultipatch(nbpts, (V_0, V_1), (xmp1, xmp2), (ymp1, ymp2), xuh = (xuh,  xuh_1), Func = u_exact)
+solutions = [
+    {"name": "Solution", "data": (xuh,  xuh_1)}
+]
+paraview_SolutionMultipatch(nbpts, (V_0, V_1), (xmp1, xmp2), (ymp1, ymp2), solution= solutions, Func = u_exact)
 # plot_JacobianMultipatch(nbpts, (V_0, V_1), (xmp1, xmp2), (ymp1, ymp2))
 # plot_MeshMultipatch(nbpts, (V_0, V_1), (xmp1, xmp2), (ymp1, ymp2))
